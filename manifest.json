@@ -1,6 +1,6 @@
 {
-	"id": "graphforge",
-	"name": "GraphForge",
+	"id": "graphforge-3d",
+	"name": "GraphForge 3D",
 	"version": "0.2.0",
 	"minAppVersion": "1.4.16",
 	"description": "Immersive 3D knowledge graph visualization with physics engines, AI-powered suggestions, analytics, and time travel",
