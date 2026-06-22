@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphForge 3D - Product Screenshot</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; width: 1200px; height: 800px; }
+
+/* Starfield background */
+.starfield { position: absolute; width: 100%; height: 100%; }
+.star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle 3s ease-in-out infinite alternate; }
+@keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+/* Nebula effects */
+.nebula { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.15; }
+.nebula-1 { width: 300px; height: 200px; background: #4400aa; top: 10%; left: 5%; }
+.nebula-2 { width: 250px; height: 180px; background: #0044aa; top: 60%; right: 10%; }
+.nebula-3 { width: 200px; height: 150px; background: #aa0044; bottom: 20%; left: 30%; }
+
+/* Graph nodes */
+.graph-container { position: absolute; width: 100%; height: 100%; }
+.node { position: absolute; border-radius: 50%; }
+.node-glow { position: absolute; border-radius: 50%; filter: blur(8px); opacity: 0.6; }
+.node-label { position: absolute; color: #fff; font-size: 9px; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
+
+/* Link lines */
+.link { position: absolute; height: 1px; background: rgba(74, 158, 255, 0.15); transform-origin: left center; }
+
+/* Toolbar */
+.toolbar { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; align-items: center; z-index: 10; }
+.toolbar-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(10,10,30,0.8); color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s; }
+.toolbar-btn:hover { background: rgba(74,158,255,0.2); border-color: rgba(74,158,255,0.4); }
+.toolbar-btn.active { background: rgba(74,158,255,0.3); border-color: #4a9eff; }
+.toolbar-select { height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(10,10,30,0.8); color: #fff; font-size: 11px; padding: 0 8px; backdrop-filter: blur(8px); }
+
+/* Analytics panel */
+.analytics-panel { position: absolute; top: 50px; right: 12px; width: 260px; background: rgba(10,10,30,0.95); border: 1px solid rgba(74,158,255,0.2); border-radius: 10px; padding: 14px; z-index: 10; backdrop-filter: blur(12px); }
+.analytics-header { font-size: 13px; font-weight: 700; color: #4a9eff; margin-bottom: 12px; display: flex; justify-content: space-between; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.stat-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 8px; text-align: center; }
+.stat-value { font-size: 16px; font-weight: 700; }
+.stat-label { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+.section-title { font-size: 10px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.most-connected { margin-bottom: 12px; }
+.mc-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.medal { font-size: 12px; }
+.mc-name { font-size: 10px; color: #fff; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mc-count { font-size: 10px; font-weight: 600; color: #4a9eff; }
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 40px; padding: 0 2px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bar { width: 100%; border-radius: 2px 2px 0 0; background: linear-gradient(to top, rgba(74,158,255,0.8), rgba(74,158,255,0.3)); }
+.bar-label { font-size: 7px; color: #666; }
+
+/* Branding */
+.branding { position: absolute; bottom: 12px; left: 12px; z-index: 10; }
+.branding-title { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+.branding-subtitle { font-size: 10px; color: #4a9eff; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+/* Version badge */
+.version-badge { position: absolute; bottom: 12px; right: 12px; background: rgba(74,158,255,0.15); border: 1px solid rgba(74,158,255,0.3); border-radius: 12px; padding: 4px 10px; font-size: 10px; color: #4a9eff; font-weight: 600; z-index: 10; }
+</style>
+</head>
+<body>
+
+<!-- Starfield -->
+<div class="starfield" id="starfield"></div>
+
+<!-- Nebulae -->
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
+
+<!-- Graph visualization -->
+<div class="graph-container" id="graph"></div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-btn" title="Search">🔍</div>
+  <div class="toolbar-btn" title="Labels">🏷️</div>
+  <div class="toolbar-btn" title="Reset">🔄</div>
+  <div class="toolbar-btn" title="Pause">⏸️</div>
+  <div class="toolbar-btn active" title="Focus">🎯</div>
+  <select class="toolbar-select">
+    <option>Force</option>
+    <option>Tree</option>
+    <option>Circle</option>
+    <option>Grid</option>
+    <option>Timeline</option>
+    <option>Radial</option>
+    <option>Solar System</option>
+    <option>Galaxy</option>
+  </select>
+  <select class="toolbar-select">
+    <option>All Nodes</option>
+    <option>Hub & Spoke</option>
+  </select>
+  <div class="toolbar-btn" title="Suggestions">💡</div>
+  <div class="toolbar-btn active" title="Analytics">📊</div>
+  <div class="toolbar-btn" title="Export">📤</div>
+  <div class="toolbar-btn" title="Forces">🎛️</div>
+  <div class="toolbar-btn" title="Time Travel">⏳</div>
+  <select class="toolbar-select">
+    <option>⚡ Classical</option>
+    <option>🌌 Einstein</option>
+    <option>🔮 Nexus</option>
+  </select>
+</div>
+
+<!-- Analytics Panel -->
+<div class="analytics-panel">
+  <div class="analytics-header">
+    <span>📊 Graph Analytics</span>
+    <span style="color:#666;cursor:pointer">✕</span>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-value" style="color:#4a9eff">247</div>
+      <div class="stat-label">Nodes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#50fa7b">1,834</div>
+      <div class="stat-label">Links</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#ffb86c">12</div>
+      <div class="stat-label">Orphans</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#bd93f9">3.7%</div>
+      <div class="stat-label">Density</div>
+    </div>
+  </div>
+  <div class="section-title">🏆 Most Connected</div>
+  <div class="most-connected">
+    <div class="mc-row"><span class="medal">🥇</span><span class="mc-name">Project Overview</span><span class="mc-count">47</span></div>
+    <div class="mc-row"><span class="medal">🥈</span><span class="mc-name">Meeting Notes</span><span class="mc-count">38</span></div>
+    <div class="mc-row"><span class="medal">🥉</span><span class="mc-name">Research Index</span><span class="mc-count">31</span></div>
+    <div class="mc-row"><span class="medal">4️⃣</span><span class="mc-name">Daily Journal</span><span class="mc-count">24</span></div>
+    <div class="mc-row"><span class="medal">5️⃣</span><span class="mc-name">Book Notes</span><span class="mc-count">19</span></div>
+  </div>
+  <div class="section-title">📅 Weekly Activity</div>
+  <div class="bar-chart">
+    <div class="bar-col"><div class="bar" style="height:60%"></div><div class="bar-label">6/1</div></div>
+    <div class="bar-col"><div class="bar" style="height:80%"></div><div class="bar-label">6/8</div></div>
+    <div class="bar-col"><div class="bar" style="height:45%"></div><div class="bar-label">6/15</div></div>
+    <div class="bar-col"><div class="bar" style="height:100%"></div><div class="bar-label">6/22</div></div>
+  </div>
+</div>
+
+<!-- Branding -->
+<div class="branding">
+  <div class="branding-title">GraphForge 3D</div>
+  <div class="branding-subtitle">Knowledge Graph Visualization</div>
+</div>
+
+<!-- Version -->
+<div class="version-badge">v0.2.0</div>
+
+<script>
+// Generate stars
+const starfield = document.getElementById('starfield');
+for (let i = 0; i < 200; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  const size = Math.random() * 2 + 0.5;
+  star.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;opacity:${Math.random()*0.5+0.2}`;
+  starfield.appendChild(star);
+}
+
+// Generate graph nodes
+const graph = document.getElementById('graph');
+const nodes = [];
+const nodeData = [
+  { name: 'Project Overview', x: 600, y: 400, size: 12, color: '#4a9eff', degree: 47 },
+  { name: 'Meeting Notes', x: 450, y: 300, size: 10, color: '#50fa7b', degree: 38 },
+  { name: 'Research Index', x: 750, y: 350, size: 9, color: '#ffb86c', degree: 31 },
+  { name: 'Daily Journal', x: 550, y: 500, size: 8, color: '#bd93f9', degree: 24 },
+  { name: 'Book Notes', x: 700, y: 550, size: 7, color: '#ff79c6', degree: 19 },
+  { name: 'Ideas', x: 400, y: 450, size: 6, color: '#8be9fd', degree: 15 },
+  { name: 'Tasks', x: 800, y: 450, size: 6, color: '#4a9eff', degree: 12 },
+  { name: 'References', x: 500, y: 250, size: 5, color: '#50fa7b', degree: 9 },
+  { name: 'Templates', x: 650, y: 250, size: 5, color: '#ffb86c', degree: 7 },
+  { name: 'Archive', x: 350, y: 350, size: 4, color: '#6272a4', degree: 5 },
+];
+
+// Add scattered smaller nodes
+for (let i = 0; i < 40; i++) {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 150 + Math.random() * 250;
+  nodeData.push({
+    name: '',
+    x: 600 + Math.cos(angle) * radius,
+    y: 400 + Math.sin(angle) * radius,
+    size: 2 + Math.random() * 3,
+    color: ['#4a9eff', '#50fa7b', '#ffb86c', '#bd93f9', '#8be9fd', '#ff79c6'][Math.floor(Math.random() * 6)],
+    degree: Math.floor(Math.random() * 5)
+  });
+}
+
+// Draw links between nearby nodes
+for (let i = 0; i < nodeData.length; i++) {
+  for (let j = i + 1; j < nodeData.length; j++) {
+    const dx = nodeData[i].x - nodeData[j].x;
+    const dy = nodeData[i].y - nodeData[j].y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 200 && Math.random() > 0.7) {
+      const link = document.createElement('div');
+      link.className = 'link';
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      link.style.cssText = `left:${nodeData[j].x}px;top:${nodeData[j].y}px;width:${dist}px;transform:rotate(${angle}deg);opacity:${0.08 + Math.random() * 0.08}`;
+      graph.appendChild(link);
+    }
+  }
+}
+
+// Draw nodes
+nodeData.forEach(n => {
+  // Glow
+  const glow = document.createElement('div');
+  glow.className = 'node-glow';
+  glow.style.cssText = `left:${n.x-n.size*2}px;top:${n.y-n.size*2}px;width:${n.size*4}px;height:${n.size*4}px;background:${n.color}`;
+  graph.appendChild(glow);
+
+  // Node
+  const node = document.createElement('div');
+  node.className = 'node';
+  node.style.cssText = `left:${n.x-n.size/2}px;top:${n.y-n.size/2}px;width:${n.size}px;height:${n.size}px;background:${n.color};box-shadow:0 0 ${n.size}px ${n.color}40`;
+  graph.appendChild(node);
+
+  // Label
+  if (n.name) {
+    const label = document.createElement('div');
+    label.className = 'node-label';
+    label.textContent = n.name;
+    label.style.cssText = `left:${n.x + n.size/2 + 4}px;top:${n.y - 6}px`;
+    graph.appendChild(label);
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GraphForge 3D - Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; width: 1200px; height: 800px; position: relative; }
+
+/* Animated starfield */
+.starfield { position: absolute; width: 100%; height: 100%; }
+.star { position: absolute; background: #fff; border-radius: 50%; }
+
+/* Nebula */
+.nebula { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.12; animation: nebula-float 8s ease-in-out infinite alternate; }
+@keyframes nebula-float { 0% { transform: translate(0,0); } 100% { transform: translate(20px, -15px); } }
+
+/* Graph container */
+.graph-container { position: absolute; width: 100%; height: 100%; }
+
+/* Nodes with animation */
+.node-group { position: absolute; transition: transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.node-glow { position: absolute; border-radius: 50%; filter: blur(10px); opacity: 0.5; }
+.node { position: absolute; border-radius: 50%; cursor: pointer; }
+.node-label { position: absolute; color: rgba(255,255,255,0.7); font-size: 9px; white-space: nowrap; pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+/* Links */
+.link { position: absolute; height: 1px; transform-origin: left center; }
+
+/* Toolbar */
+.toolbar { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; align-items: center; z-index: 10; }
+.tb-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(10,10,30,0.85); color: rgba(255,255,255,0.6); font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(8px); }
+.tb-btn:hover { background: rgba(74,158,255,0.15); color: #fff; }
+.tb-btn.active { background: rgba(74,158,255,0.25); color: #4a9eff; border-color: rgba(74,158,255,0.4); }
+.tb-select { height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(10,10,30,0.85); color: rgba(255,255,255,0.6); font-size: 10px; padding: 0 6px; backdrop-filter: blur(8px); }
+
+/* Feature callouts */
+.callout { position: absolute; background: rgba(10,10,30,0.9); border: 1px solid rgba(74,158,255,0.3); border-radius: 8px; padding: 8px 12px; font-size: 10px; color: #fff; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.5s ease; z-index: 20; }
+.callout.show { opacity: 1; }
+.callout-title { font-weight: 700; color: #4a9eff; margin-bottom: 2px; }
+.callout-desc { color: #888; font-size: 9px; }
+
+/* Branding */
+.branding { position: absolute; bottom: 16px; left: 16px; z-index: 10; }
+.branding-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+.branding-sub { font-size: 9px; color: #4a9eff; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+/* Version */
+.version { position: absolute; bottom: 16px; right: 16px; background: rgba(74,158,255,0.12); border: 1px solid rgba(74,158,255,0.25); border-radius: 12px; padding: 4px 10px; font-size: 10px; color: #4a9eff; font-weight: 600; z-index: 10; }
+
+/* Scene indicator */
+.scene-indicator { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); background: rgba(10,10,30,0.8); border: 1px solid rgba(74,158,255,0.2); border-radius: 16px; padding: 6px 16px; font-size: 11px; color: #4a9eff; font-weight: 600; z-index: 10; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.5s; }
+.scene-indicator.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="starfield" id="stars"></div>
+<div class="nebula" style="width:300px;height:200px;background:#4400aa;top:10%;left:5%"></div>
+<div class="nebula" style="width:250px;height:180px;background:#0044aa;top:60%;right:10%;animation-delay:-3s"></div>
+<div class="nebula" style="width:200px;height:150px;background:#aa0044;bottom:20%;left:30%;animation-delay:-5s"></div>
+
+<div class="graph-container" id="graph"></div>
+
+<div class="toolbar">
+  <div class="tb-btn">🔍</div>
+  <div class="tb-btn">🏷️</div>
+  <div class="tb-btn">🔄</div>
+  <div class="tb-btn">⏸️</div>
+  <div class="tb-btn">🎯</div>
+  <select class="tb-select" id="layoutSelect">
+    <option value="force">Force</option>
+    <option value="galaxy">Galaxy</option>
+    <option value="solar">Solar System</option>
+    <option value="tree">Tree</option>
+  </select>
+  <select class="tb-select" id="physicsSelect">
+    <option value="classical">⚡ Classical</option>
+    <option value="einstein">🌌 Einstein</option>
+    <option value="nexus">🔮 Nexus</option>
+  </select>
+  <div class="tb-btn">💡</div>
+  <div class="tb-btn">📊</div>
+  <div class="tb-btn">📤</div>
+  <div class="tb-btn">🎛️</div>
+  <div class="tb-btn">⏳</div>
+</div>
+
+<div class="scene-indicator" id="sceneIndicator">🌌 Galaxy Layout • Einstein Physics</div>
+
+<div class="callout" id="callout1" style="top:200px;right:40px">
+  <div class="callout-title">🌌 Einstein Physics</div>
+  <div class="callout-desc">Spacetime curvature & time dilation</div>
+</div>
+<div class="callout" id="callout2" style="top:350px;right:40px">
+  <div class="callout-title">🎛️ Force Controls</div>
+  <div class="callout-desc">Real-time tunable parameters</div>
+</div>
+<div class="callout" id="callout3" style="top:500px;right:40px">
+  <div class="callout-title">📊 Analytics</div>
+  <div class="callout-desc">Graph statistics & insights</div>
+</div>
+
+<div class="branding">
+  <div class="branding-title">GraphForge 3D</div>
+  <div class="branding-sub">Knowledge Graph Visualization</div>
+</div>
+<div class="version">v0.2.0</div>
+
+<script>
+// Stars
+const stars = document.getElementById('stars');
+for (let i = 0; i < 150; i++) {
+  const s = document.createElement('div');
+  s.style.cssText = `position:absolute;width:${Math.random()*2+0.5}px;height:${Math.random()*2+0.5}px;background:#fff;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%;opacity:${Math.random()*0.5+0.2}`;
+  stars.appendChild(s);
+}
+
+// Graph
+const graph = document.getElementById('graph');
+const nodeData = [
+  { name: 'Projects', x: 600, y: 380, r: 14, color: '#4a9eff' },
+  { name: 'Meetings', x: 420, y: 280, r: 11, color: '#50fa7b' },
+  { name: 'Research', x: 780, y: 320, r: 10, color: '#ffb86c' },
+  { name: 'Journal', x: 520, y: 520, r: 9, color: '#bd93f9' },
+  { name: 'Books', x: 720, y: 540, r: 8, color: '#ff79c6' },
+  { name: 'Ideas', x: 380, y: 460, r: 7, color: '#8be9fd' },
+  { name: 'Tasks', x: 820, y: 440, r: 7, color: '#4a9eff' },
+  { name: 'Refs', x: 480, y: 220, r: 6, color: '#50fa7b' },
+  { name: 'Templates', x: 660, y: 220, r: 5, color: '#ffb86c' },
+  { name: 'Archive', x: 340, y: 360, r: 5, color: '#6272a4' },
+];
+// Scattered small nodes
+for (let i = 0; i < 35; i++) {
+  const a = Math.random()*Math.PI*2, r = 120+Math.random()*280;
+  nodeData.push({ name:'', x:600+Math.cos(a)*r, y:380+Math.sin(a)*r, r:2+Math.random()*3, color:['#4a9eff','#50fa7b','#ffb86c','#bd93f9','#8be9fd'][Math.floor(Math.random()*5)] });
+}
+
+function renderGraph() {
+  graph.innerHTML = '';
+  // Links
+  for (let i=0;i<nodeData.length;i++) for(let j=i+1;j<nodeData.length;j++) {
+    const dx=nodeData[i].x-nodeData[j].x, dy=nodeData[i].y-nodeData[j].y, d=Math.sqrt(dx*dx+dy*dy);
+    if(d<180&&Math.random()>0.75) {
+      const l=document.createElement('div'); l.className='link';
+      l.style.cssText=`left:${nodeData[j].x}px;top:${nodeData[j].y}px;width:${d}px;transform:rotate(${Math.atan2(dy,dx)*180/Math.PI}deg);opacity:0.06`;
+      graph.appendChild(l);
+    }
+  }
+  // Nodes
+  nodeData.forEach(n => {
+    const g=document.createElement('div'); g.className='node-glow';
+    g.style.cssText=`left:${n.x-n.r*2}px;top:${n.y-n.r*2}px;width:${n.r*4}px;height:${n.r*4}px;background:${n.color}`;
+    graph.appendChild(g);
+    const nd=document.createElement('div'); nd.className='node';
+    nd.style.cssText=`left:${n.x-n.r/2}px;top:${n.y-n.r/2}px;width:${n.r}px;height:${n.r}px;background:${n.color};box-shadow:0 0 ${n.r}px ${n.color}50`;
+    graph.appendChild(nd);
+    if(n.name) {
+      const l=document.createElement('div'); l.className='node-label'; l.textContent=n.name;
+      l.style.cssText=`left:${n.x+n.r/2+4}px;top:${n.y-5}px`;
+      graph.appendChild(l);
+    }
+  });
+}
+renderGraph();
+
+// Demo sequence
+const indicator = document.getElementById('sceneIndicator');
+const c1 = document.getElementById('callout1'), c2 = document.getElementById('callout2'), c3 = document.getElementById('callout3');
+
+setTimeout(() => { indicator.textContent='🌌 Galaxy Layout • Einstein Physics'; indicator.classList.add('show'); }, 500);
+setTimeout(() => { c1.classList.add('show'); }, 1500);
+setTimeout(() => { c1.classList.remove('show'); c2.classList.add('show'); }, 3000);
+setTimeout(() => { c2.classList.remove('show'); c3.classList.add('show'); }, 4500);
+setTimeout(() => { c3.classList.remove('show'); indicator.classList.remove('show'); }, 6000);
+</script>
+</body>
+</html>
