@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GraphForge 3D - Screenshot 4: Time Travel</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; width: 1200px; height: 800px; position: relative; }
+.starfield { position: absolute; width: 100%; height: 100%; }
+.star { position: absolute; background: #fff; border-radius: 50%; }
+.nebula { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.1; }
+.graph-container { position: absolute; width: 100%; height: 100%; }
+.node-glow { position: absolute; border-radius: 50%; filter: blur(8px); opacity: 0.4; }
+.node { position: absolute; border-radius: 50%; }
+.node-label { position: absolute; color: rgba(255,255,255,0.5); font-size: 8px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.8); pointer-events: none; }
+.link { position: absolute; height: 1px; transform-origin: left center; }
+.toolbar { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; align-items: center; z-index: 10; }
+.tb-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(10,10,30,0.85); color: rgba(255,255,255,0.5); font-size: 13px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+.tb-btn.active { background: rgba(255,184,108,0.2); color: #ffb86c; border-color: rgba(255,184,108,0.3); }
+.tb-select { height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(10,10,30,0.85); color: rgba(255,255,255,0.5); font-size: 10px; padding: 0 6px; backdrop-filter: blur(8px); }
+/* Temporal panel */
+.temporal-panel { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); width: 560px; background: rgba(10,10,30,0.92); border: 1px solid rgba(255,184,108,0.25); border-radius: 10px; padding: 12px 16px; z-index: 10; backdrop-filter: blur(12px); }
+.tp-date { font-size: 12px; font-weight: 700; color: #ffb86c; text-align: center; margin-bottom: 8px; }
+.tp-slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tp-slider { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.08); border-radius: 2px; outline: none; }
+.tp-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #ffb86c; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); }
+.tp-controls { display: flex; gap: 8px; justify-content: center; }
+.tp-btn { padding: 4px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6); font-size: 10px; cursor: pointer; }
+.tp-btn.primary { background: rgba(255,184,108,0.15); color: #ffb86c; border-color: rgba(255,184,108,0.3); }
+.branding { position: absolute; bottom: 80px; left: 16px; z-index: 10; }
+.branding-title { font-size: 16px; font-weight: 700; color: #fff; }
+.branding-sub { font-size: 8px; color: #ffb86c; letter-spacing: 2px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="starfield" id="stars"></div>
+<div class="nebula" style="width:250px;height:180px;background:#aa4400;top:15%;left:60%"></div>
+<div class="nebula" style="width:200px;height:150px;background:#4400aa;top:60%;left:10%"></div>
+<div class="graph-container" id="graph"></div>
+<div class="toolbar">
+  <div class="tb-btn">🔍</div><div class="tb-btn">🏷️</div><div class="tb-btn">🔄</div><div class="tb-btn">⏸️</div><div class="tb-btn">🎯</div>
+  <select class="tb-select"><option>Force</option></select>
+  <select class="tb-select"><option>All Nodes</option></select>
+  <div class="tb-btn">💡</div><div class="tb-btn">📊</div><div class="tb-btn">📤</div><div class="tb-btn">🎛️</div><div class="tb-btn active">⏳</div>
+  <select class="tb-select"><option>⚡ Classical</option></select>
+</div>
+<div class="temporal-panel">
+  <div class="tp-date">📅 June 15, 2026</div>
+  <div class="tp-slider-row"><span style="color:#666;font-size:10px">Start</span><input type="range" class="tp-slider" value="75"><span style="color:#666;font-size:10px">Now</span></div>
+  <div class="tp-controls">
+    <button class="tp-btn primary">▶ Play</button>
+    <button class="tp-btn">⏸ Pause</button>
+    <button class="tp-btn">⟲ Reset</button>
+    <button class="tp-btn">✕ Close</button>
+  </div>
+</div>
+<div class="branding"><div class="branding-title">GraphForge 3D</div><div class="branding-sub">Time Travel Mode</div></div>
+<script>
+const stars = document.getElementById('stars');
+for (let i = 0; i < 120; i++) { const s = document.createElement('div'); s.style.cssText = `position:absolute;width:${Math.random()*2+0.5}px;height:${Math.random()*2+0.5}px;background:#fff;border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%;opacity:${Math.random()*0.4+0.15}`; stars.appendChild(s); }
+const graph = document.getElementById('graph');
+// Fewer nodes to simulate earlier point in time
+const nodes = [
+  {name:'Projects',x:580,y:360,r:11,color:'#4a9eff'},{name:'Meetings',x:440,y:280,r:9,color:'#50fa7b'},{name:'Research',x:760,y:340,r:8,color:'#ffb86c'},
+  {name:'Journal',x:520,y:500,r:7,color:'#bd93f9'},{name:'Ideas',x:380,y:440,r:6,color:'#8be9fd'},{name:'Tasks',x:800,y:420,r:5,color:'#4a9eff'},
+  {name:'Refs',x:480,y:240,r:4,color:'#50fa7b'},{name:'Notes',x:700,y:240,r:4,color:'#ffb86c'},
+];
+for (let i=0;i<15;i++){const a=Math.random()*Math.PI*2,r=100+Math.random()*250;nodes.push({name:'',x:600+Math.cos(a)*r,y:380+Math.sin(a)*r,r:2+Math.random()*2.5,color:['#4a9eff','#50fa7b','#ffb86c','#bd93f9','#8be9fd'][Math.floor(Math.random()*5)]});}
+for (let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++) {
+  const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+  if(d<180&&Math.random()>0.7){const l=document.createElement('div');l.className='link';l.style.cssText=`left:${nodes[j].x}px;top:${nodes[j].y}px;width:${d}px;transform:rotate(${Math.atan2(dy,dx)*180/Math.PI}deg);opacity:${0.06+Math.random()*0.06}`;graph.appendChild(l);}
+}
+nodes.forEach(n => {
+  const g=document.createElement('div');g.className='node-glow';g.style.cssText=`left:${n.x-n.r*2}px;top:${n.y-n.r*2}px;width:${n.r*4}px;height:${n.r*4}px;background:${n.color}`;graph.appendChild(g);
+  const nd=document.createElement('div');nd.className='node';nd.style.cssText=`left:${n.x-n.r/2}px;top:${n.y-n.r/2}px;width:${n.r}px;height:${n.r}px;background:${n.color};box-shadow:0 0 ${n.r}px ${n.color}30`;graph.appendChild(nd);
+  if(n.name){const l=document.createElement('div');l.className='node-label';l.textContent=n.name;l.style.cssText=`left:${n.x+n.r/2+4}px;top:${n.y-5}px`;graph.appendChild(l);}
+});
+</script>
+</body>
+</html>

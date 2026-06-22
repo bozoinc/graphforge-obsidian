@@ -7,5 +7,6 @@
 	"author": "Bozo (644bo)",
 	"authorUrl": "",
 	"fundingUrl": "",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"license": "MIT"
 }

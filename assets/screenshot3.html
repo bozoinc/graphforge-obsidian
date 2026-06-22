@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GraphForge 3D - Screenshot 3: Force Controls</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111122; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; width: 1200px; height: 800px; position: relative; }
+.graph-container { position: absolute; width: 100%; height: 100%; }
+.node-glow { position: absolute; border-radius: 50%; filter: blur(8px); opacity: 0.4; }
+.node { position: absolute; border-radius: 50%; }
+.node-label { position: absolute; color: rgba(255,255,255,0.6); font-size: 8px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.8); pointer-events: none; }
+.link { position: absolute; height: 1px; transform-origin: left center; }
+.toolbar { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; align-items: center; z-index: 10; }
+.tb-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(15,15,30,0.85); color: rgba(255,255,255,0.5); font-size: 13px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+.tb-btn.active { background: rgba(80,250,123,0.2); color: #50fa7b; border-color: rgba(80,250,123,0.3); }
+.tb-select { height: 30px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); background: rgba(15,15,30,0.85); color: rgba(255,255,255,0.5); font-size: 10px; padding: 0 6px; backdrop-filter: blur(8px); }
+/* Force panel */
+.force-panel { position: absolute; top: 50px; right: 12px; width: 240px; background: rgba(15,15,30,0.95); border: 1px solid rgba(80,250,123,0.2); border-radius: 10px; padding: 14px; z-index: 10; backdrop-filter: blur(12px); }
+.fp-header { font-size: 12px; font-weight: 700; color: #50fa7b; margin-bottom: 10px; display: flex; justify-content: space-between; }
+.fp-row { margin-bottom: 8px; }
+.fp-label { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.fp-label-name { font-size: 10px; color: #aaa; }
+.fp-label-val { font-size: 10px; color: #50fa7b; font-weight: 600; }
+.fp-slider { width: 100%; height: 4px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,0.08); border-radius: 2px; outline: none; }
+.fp-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #50fa7b; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); }
+.fp-desc { font-size: 8px; color: #555; margin-top: 2px; }
+.fp-reset { width: 100%; padding: 4px; margin-top: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); background: rgba(80,250,123,0.08); color: #50fa7b; font-size: 9px; cursor: pointer; }
+.branding { position: absolute; bottom: 16px; left: 16px; z-index: 10; }
+.branding-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+.branding-sub { font-size: 9px; color: #50fa7b; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="graph-container" id="graph"></div>
+<div class="toolbar">
+  <div class="tb-btn">🔍</div><div class="tb-btn">🏷️</div><div class="tb-btn">🔄</div><div class="tb-btn">⏸️</div><div class="tb-btn">🎯</div>
+  <select class="tb-select"><option>Force</option></select>
+  <select class="tb-select"><option>All Nodes</option></select>
+  <div class="tb-btn">💡</div><div class="tb-btn">📊</div><div class="tb-btn">📤</div><div class="tb-btn active">🎛️</div><div class="tb-btn">⏳</div>
+  <select class="tb-select"><option>⚡ Classical</option></select>
+</div>
+<div class="force-panel">
+  <div class="fp-header"><span>🎛️ Force Controls</span><span style="color:#666;cursor:pointer">✕</span></div>
+  <div class="fp-row"><div class="fp-label"><span class="fp-label-name">🌌 Gravity</span><span class="fp-label-val">65%</span></div><input type="range" class="fp-slider" value="65"><div class="fp-desc">Central attraction strength</div></div>
+  <div class="fp-row"><div class="fp-label"><span class="fp-label-name">⚡ Repel</span><span class="fp-label-val">80%</span></div><input type="range" class="fp-slider" value="80"><div class="fp-desc">Node separation force</div></div>
+  <div class="fp-row"><div class="fp-label"><span class="fp-label-name">🔗 Link</span><span class="fp-label-val">45%</span></div><input type="range" class="fp-slider" value="45"><div class="fp-desc">Connection strength</div></div>
+  <div class="fp-row"><div class="fp-label"><span class="fp-label-name">💫 Distance</span><span class="fp-label-val">55%</span></div><input type="range" class="fp-slider" value="55"><div class="fp-desc">Link rest distance</div></div>
+  <div class="fp-row"><div class="fp-label"><span class="fp-label-name">🌊 Damping</span><span class="fp-label-val">85%</span></div><input type="range" class="fp-slider" value="85"><div class="fp-desc">Velocity friction</div></div>
+  <button class="fp-reset">↺ Reset to Defaults</button>
+</div>
+<div class="branding"><div class="branding-title">GraphForge 3D</div><div class="branding-sub">Force Controls Panel</div></div>
+<script>
+const graph = document.getElementById('graph');
+const nodes = [
+  {name:'Projects',x:600,y:380,r:12,color:'#4a9eff'},{name:'Meetings',x:420,y:280,r:10,color:'#50fa7b'},{name:'Research',x:780,y:320,r:9,color:'#ffb86c'},
+  {name:'Journal',x:520,y:520,r:8,color:'#bd93f9'},{name:'Books',x:720,y:540,r:7,color:'#ff79c6'},{name:'Ideas',x:380,y:460,r:6,color:'#8be9fd'},
+  {name:'Tasks',x:820,y:440,r:6,color:'#4a9eff'},{name:'Refs',x:480,y:220,r:5,color:'#50fa7b'},{name:'Templates',x:660,y:220,r:5,color:'#ffb86c'},
+];
+for (let i=0;i<25;i++){const a=Math.random()*Math.PI*2,r=120+Math.random()*280;nodes.push({name:'',x:600+Math.cos(a)*r,y:380+Math.sin(a)*r,r:2+Math.random()*3,color:['#4a9eff','#50fa7b','#ffb86c','#bd93f9','#8be9fd'][Math.floor(Math.random()*5)]});}
+for (let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++) {
+  const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+  if(d<180&&Math.random()>0.7){const l=document.createElement('div');l.className='link';l.style.cssText=`left:${nodes[j].x}px;top:${nodes[j].y}px;width:${d}px;transform:rotate(${Math.atan2(dy,dx)*180/Math.PI}deg);opacity:${0.08+Math.random()*0.08}`;graph.appendChild(l);}
+}
+nodes.forEach(n => {
+  const g=document.createElement('div');g.className='node-glow';g.style.cssText=`left:${n.x-n.r*2}px;top:${n.y-n.r*2}px;width:${n.r*4}px;height:${n.r*4}px;background:${n.color}`;graph.appendChild(g);
+  const nd=document.createElement('div');nd.className='node';nd.style.cssText=`left:${n.x-n.r/2}px;top:${n.y-n.r/2}px;width:${n.r}px;height:${n.r}px;background:${n.color};box-shadow:0 0 ${n.r}px ${n.color}30`;graph.appendChild(nd);
+  if(n.name){const l=document.createElement('div');l.className='node-label';l.textContent=n.name;l.style.cssText=`left:${n.x+n.r/2+4}px;top:${n.y-5}px`;graph.appendChild(l);}
+});
+</script>
+</body>
+</html>
