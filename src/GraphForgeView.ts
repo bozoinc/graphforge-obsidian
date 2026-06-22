@@ -1,12 +1,12 @@
-import { ItemView, WorkspaceLeaf, TFile, MetadataCache, Vault, Notice, Menu, Modal, App, Setting } from 'obsidian';
+import { ItemView, WorkspaceLeaf, TFile, MetadataCache, Vault, Notice, Menu, Modal, App } from 'obsidian';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { EffectComposer, RenderPass, BloomEffect, EffectPass } from 'postprocessing';
-import { GraphForgeSettings, THEMES, CLUSTER_COLORS, SavedView, ClusterMode } from './settings';
+import { GraphForgeSettings, THEMES, ClusterMode } from './settings';
 import { computeAnalytics, GraphAnalytics } from './analytics';
 import { findSuggestedConnections, SuggestedConnection } from './suggestions';
-import { runClassicalPhysics, runEinsteinPhysics, runNexusPhysics, getDefaultForceParams, type ForceParams } from './physics';
+import { runClassicalPhysics, runEinsteinPhysics, runNexusPhysics, getDefaultForceParams } from './physics';
 
 export interface GraphNode {
 	file: TFile; mesh: THREE.Mesh; label: CSS2DObject; links: string[];
@@ -66,7 +66,7 @@ export class GraphForgeView extends ItemView {
 	}
 
 	getViewType(): string { return GRAPHFORGE_VIEW_TYPE; }
-	getDisplayText(): string { return 'GraphForge'; }
+	getDisplayText(): string { return 'Graphforge'; }
 
 	// ═══════════════════════════════════════════════════════════════════════
 	// INIT
@@ -828,4 +828,4 @@ class SuggestConnectionsModal extends Modal {
 }
 
 // Suppress unused warnings
-void [CLUSTER_COLORS, computeAnalytics];
+void [computeAnalytics];
