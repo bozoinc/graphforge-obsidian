@@ -1,92 +1,134 @@
-# Obsidian Sample Plugin
+# GraphForge -- 3D Knowledge Graph Visualization for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+GraphForge transforms your Obsidian vault into an immersive 3D knowledge graph. See your notes as nodes, their connections as links, and explore your knowledge in a whole new dimension.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
+### 🎨 Visual Themes
+- **Dark** -- Clean, professional dark theme
+- **Light** -- Bright, airy light theme
+- **Neon** -- Vibrant neon accents on dark background
+- **Galaxy** -- Deep space with starfield, nebulae, and bloom effects
 
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and outputs a Notice on click.
-- Registers a global interval which logs 'setInterval' to the console.
+### ⚡ Physics Engines
+- **Classical** -- Traditional force-directed layout
+- **Einstein** -- Relativity-inspired physics with spacetime curvature, time dilation, and speed of light limits
+- **Nexus** -- Quantum harmonics with golden ratio spirals, prime number resonance, and wave function evolution
 
-## First time developing plugins?
+### 📐 Layout Algorithms
+- **Force** -- Dynamic force-directed (default)
+- **Tree** -- Hierarchical tree structure
+- **Circle** -- Rings by connection count
+- **Grid** -- Organized grid layout
+- **Timeline** -- Chronological by creation date
+- **Radial** -- Selected node at center
+- **Solar System** -- Hub and orbital rings
+- **Galaxy** -- Spiral arms with golden ratio spacing
 
-Quick starting guide for new plugin devs:
+### 🎛️ Force Controls
+Tune the physics in real-time:
+- **Gravity** -- Central attraction strength
+- **Repel** -- Node separation force
+- **Link** -- Connection attraction strength
+- **Distance** -- Link rest distance / speed of light
+- **Damping/Rotation** -- Velocity friction
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `src/main.ts` to `main.js`.
-- Make changes to `src/main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+### 📊 Analytics Panel
+- Total nodes, links, orphans, connection density
+- Most connected notes (top 5)
+- Weekly activity bar chart
+- Connection distribution histogram
 
-## Releasing new releases
+### 📤 Export
+- **PNG** -- High-resolution screenshot
+- **HTML** -- Interactive standalone visualization
+- **JSON** -- Raw graph data for external tools
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### ⏳ Time Travel
+- Slider to watch your knowledge graph evolve over time
+- Play/pause animation through note creation history
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+### 💡 AI-Powered Suggestions
+- Automatically detects potentially related but unlinked notes
+- Accept individual suggestions or all at once
+- Highlights suggested connections in the graph
 
-## Adding your plugin to the community plugin list
+## Installation
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Install from Obsidian Community Plugins (search "GraphForge")
+2. Enable the plugin in Settings → Community Plugins
+3. Click the ribbon icon (graph node) or run command "Open GraphForge"
 
-## How to use
+## Usage
 
-- Clone this repo.
-- Make sure your NodeJS is at least v18 (`node --version`).
-- `npm i` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+### Navigation
+- **Rotate** -- Click and drag
+- **Zoom** -- Scroll wheel
+- **Pan** -- Right-click and drag
+- **Open note** -- Double-click a node
+- **Context menu** -- Right-click a node
 
-## Manually installing the plugin
+### Keyboard Shortcuts
+- `Ctrl+P` → "Open GraphForge" -- Open the graph view
+- `Arrow keys` -- Cycle through nodes
+- `Enter` -- Open selected node
+- `Tab` -- Cycle through connections
+- `/` -- Focus search box
+- `Escape` -- Reset view / exit focus mode
+- `F` -- Toggle focus mode
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+### Toolbar
+- 🔍 **Search** -- Filter nodes by name
+- 🏷️ **Labels** -- Toggle node labels
+- 🔄 **Reset** -- Reset camera view
+- ⏸️ **Pause** -- Pause/resume physics
+- 🎯 **Focus** -- Focus mode (dim unrelated nodes)
+- 📐 **Layout** -- Switch layout algorithm
+- 🔭 **View** -- View mode (All, Hub & Spoke, Constellation, Focused)
+- 💡 **Suggest** -- AI-powered connection suggestions
+- 📊 **Analytics** -- Graph statistics panel
+- 📤 **Export** -- Export as PNG/HTML/JSON
+- 🎛️ **Forces** -- Tune physics parameters
+- ⏳ **Time** -- Time travel mode
+- ⚡ **Physics** -- Switch physics engine
 
-## Improve code quality with eslint
+## Configuration
 
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code.
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+Access settings via Settings → Community Plugins → GraphForge:
 
-## Funding URL
+- **Theme** -- Visual theme (Dark/Light/Neon/Galaxy)
+- **Max Nodes** -- Maximum nodes to display (50-2000)
+- **Node Size** -- Base node size
+- **Show Labels** -- Display node names
+- **Show Orphans** -- Show unconnected notes
+- **Connection Mode** -- How links are detected (wikilinks/folder/tags/all)
+- **Auto Rotate** -- Gentle automatic rotation
+- **Bloom Intensity** -- Glow effect strength
+- **Bloom Threshold** -- Glow threshold
+- **Bloom Radius** -- Glow spread
 
-You can include funding URLs where people who use your plugin can financially support it.
+## Architecture
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-	"fundingUrl": "https://buymeacoffee.com"
-}
+```
+graphforge-plugin/
+├── manifest.json          # Plugin manifest
+├── styles.css             # Plugin styles
+├── README.md              # This file
+└── src/
+    ├── main.ts            # Plugin entry point
+    ├── settings.ts        # Settings and types
+    ├── GraphForgeView.ts  # Main 3D view class
+    ├── analytics.ts       # Graph analytics computation
+    └── suggestions.ts     # AI-powered link suggestions
 ```
 
-If you have multiple URLs, you can also do:
+## Performance Tips
 
-```json
-{
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com",
-		"GitHub Sponsor": "https://github.com/sponsors",
-		"Patreon": "https://www.patreon.com/"
-	}
-}
-```
+- For vaults with 500+ nodes, use "Hub & Spoke" or "Constellation" view modes
+- Reduce "Max Nodes" setting for smoother animation
+- Pause physics (⏸️) when not actively exploring
+- Use "Focused" view mode to reduce rendered nodes
 
-## API Documentation
+## License
 
-See https://docs.obsidian.md
+MIT License -- Free and open source.

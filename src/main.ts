@@ -1,114 +1,365 @@
-import {
-	Editor,
-	MarkdownView,
-	MarkdownFileInfo,
-	Modal,
-	Notice,
-	Plugin,
-} from 'obsidian';
-import {
-	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
-} from './settings';
+import { Plugin, WorkspaceLeaf, Notice, addIcon } from 'obsidian';
+import { GraphForgeView, GRAPHFORGE_VIEW_TYPE } from './GraphForgeView';
+import { GraphForgeSettings, DEFAULT_SETTINGS } from './settings';
 
-// Remember to rename these classes and interfaces!
+const GRAPHFORGE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="9.5" y1="10" x2="6.5" y2="6.5"/><line x1="14.5" y1="10" x2="17.5" y2="6.5"/><line x1="9.5" y1="14" x2="6.5" y2="17.5"/><line x1="14.5" y1="14" x2="17.5" y2="17.5"/></svg>`;
 
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+export default class GraphForgePlugin extends Plugin {
+	settings!: GraphForgeSettings;
 
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (_evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+		// Register icon
+		addIcon('graphforge', GRAPHFORGE_ICON);
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (
-				editor: Editor,
-				_ctx: MarkdownView | MarkdownFileInfo,
-			) => {
-				editor.replaceSelection('Sample editor command');
-			},
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
-			},
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(activeDocument, 'click', (_evt: MouseEvent) => {
-			new Notice('Click');
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000),
+		// Register view
+		this.registerView(
+			GRAPHFORGE_VIEW_TYPE,
+			(leaf) => new GraphForgeView(
+				leaf,
+				this.settings,
+				this.app.vault,
+				this.app.metadataCache
+			)
 		);
+
+		// Add ribbon icon
+		this.addRibbonIcon('graphforge', 'GraphForge', () => {
+			this.activateView();
+		});
+
+		// Add commands
+		this.addCommand({
+			id: 'open-graphforge',
+			name: 'Open GraphForge',
+			callback: () => this.activateView(),
+		});
+
+		this.addCommand({
+			id: 'suggest-connections',
+			name: 'Suggest Connections',
+			callback: () => {
+				this.activateView();
+				// The modal will be opened from the view's toolbar button
+				new Notice('Use the 💡 button in the GraphForge toolbar to see suggestions');
+			},
+		});
+
+		// Settings tab
+		this.addSettingTab(new GraphForgeSettingTab(this.app, this));
 	}
 
-	onunload() {}
+	async activateView() {
+		const { workspace } = this.app;
+		let leaf: WorkspaceLeaf | null = null;
+
+		const leaves = workspace.getLeavesOfType(GRAPHFORGE_VIEW_TYPE);
+		if (leaves.length > 0) {
+			leaf = leaves[0];
+		} else {
+			leaf = workspace.getRightLeaf(false);
+			if (leaf) {
+				await leaf.setViewState({ type: GRAPHFORGE_VIEW_TYPE, active: true });
+			}
+		}
+
+		if (leaf) {
+			workspace.revealLeaf(leaf);
+		}
+	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
-		);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+	onunload() {
+		this.app.workspace.detachLeavesOfType(GRAPHFORGE_VIEW_TYPE);
+	}
 }
 
-class SampleModal extends Modal {
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
+import { App, PluginSettingTab, Setting } from 'obsidian';
+
+class GraphForgeSettingTab extends PluginSettingTab {
+	plugin: GraphForgePlugin;
+
+	constructor(app: App, plugin: GraphForgePlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
 	}
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
+	display(): void {
+		const { containerEl } = this;
+		containerEl.empty();
+		containerEl.createEl('h2', { text: 'GraphForge Settings' });
+
+		new Setting(containerEl)
+			.setName('Node Size')
+			.setDesc('Base size of nodes in the graph')
+			.addSlider(s => s
+				.setLimits(1, 15, 0.5)
+				.setValue(this.plugin.settings.nodeSize)
+				.onChange(async (v) => {
+					this.plugin.settings.nodeSize = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Show Labels')
+			.setDesc('Display note names on nodes')
+			.addToggle(t => t
+				.setValue(this.plugin.settings.showLabels)
+				.onChange(async (v) => {
+					this.plugin.settings.showLabels = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Theme')
+			.setDesc('Visual theme for the graph')
+			.addDropdown(d => d
+				.addOption('dark', 'Dark')
+				.addOption('light', 'Light')
+				.addOption('neon', 'Neon')
+				.addOption('galaxy', 'Galaxy')
+				.setValue(this.plugin.settings.theme)
+				.onChange(async (v) => {
+					this.plugin.settings.theme = v as 'dark' | 'light' | 'neon';
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Auto Rotate')
+			.setDesc('Automatically rotate the camera')
+			.addToggle(t => t
+				.setValue(this.plugin.settings.autoRotate)
+				.onChange(async (v) => {
+					this.plugin.settings.autoRotate = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Max Nodes')
+			.setDesc('Maximum number of nodes to display')
+			.addSlider(s => s
+				.setLimits(50, 2000, 50)
+				.setValue(this.plugin.settings.maxNodes)
+				.onChange(async (v) => {
+					this.plugin.settings.maxNodes = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Connection Mode')
+			.setDesc('How to connect nodes in the graph')
+			.addDropdown(d => d
+				.addOption('links', 'Wikilinks only')
+				.addOption('folder', 'Same folder')
+				.addOption('tags', 'Shared tags')
+				.addOption('all', 'All connections')
+				.setValue(this.plugin.settings.connectionMode)
+				.onChange(async (v) => {
+					this.plugin.settings.connectionMode = v as 'links' | 'folder' | 'tags' | 'all';
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Show Orphans')
+			.setDesc('Show nodes with no connections')
+			.addToggle(t => t
+				.setValue(this.plugin.settings.showOrphans)
+				.onChange(async (v) => {
+					this.plugin.settings.showOrphans = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		// --- Layout Section ---
+		containerEl.createEl('h3', { text: 'Layout' });
+
+		new Setting(containerEl)
+			.setName('Default Layout')
+			.setDesc('Default layout algorithm for the graph')
+			.addDropdown(d => d
+				.addOption('force', 'Force-Directed')
+				.addOption('hierarchical', 'Hierarchical')
+				.addOption('circular', 'Circular')
+				.addOption('grid', 'Grid')
+				.addOption('timeline', 'Timeline')
+				.addOption('radial', 'Radial')
+				.setValue(this.plugin.settings.layoutMode)
+				.onChange(async (v) => {
+					this.plugin.settings.layoutMode = v as 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline' | 'radial';
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Show Keyboard Hints')
+			.setDesc('Show keyboard shortcut hints when opening the graph')
+			.addToggle(t => t
+				.setValue(this.plugin.settings.showKeyboardHints)
+				.onChange(async (v) => {
+					this.plugin.settings.showKeyboardHints = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		// --- Clustering Section ---
+		containerEl.createEl('h3', { text: 'Clustering' });
+
+		new Setting(containerEl)
+			.setName('Cluster Mode')
+			.setDesc('How to group nodes into visual clusters')
+			.addDropdown(d => d
+				.addOption('none', 'None')
+				.addOption('folder', 'By Folder')
+				.addOption('tags', 'By Tags')
+				.setValue(this.plugin.settings.clusterMode)
+				.onChange(async (v) => {
+					this.plugin.settings.clusterMode = v as 'none' | 'folder' | 'tags';
+					await this.plugin.saveSettings();
+				})
+			);
+
+		// --- Saved Views Section ---
+		containerEl.createEl('h3', { text: 'Saved Views' });
+
+		new Setting(containerEl)
+			.setName('Active View')
+			.setDesc('Currently active saved view (set from the graph toolbar)')
+			.addDropdown(d => {
+				d.addOption('', '— None —');
+				this.plugin.settings.savedViews.forEach(v => {
+					d.addOption(v.name, v.name);
+				});
+				d.setValue(this.plugin.settings.activeView);
+				d.onChange(async (v) => {
+					this.plugin.settings.activeView = v;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName('Manage Saved Views')
+			.setDesc(`${this.plugin.settings.savedViews.length} saved view(s)`)
+			.addButton(b => {
+				b.setButtonText('Clear All Views');
+				b.setWarning();
+				b.onClick(async () => {
+					this.plugin.settings.savedViews = [];
+					this.plugin.settings.activeView = '';
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
+
+		// List saved views with details
+		if (this.plugin.settings.savedViews.length > 0) {
+			const viewsList = containerEl.createDiv();
+			viewsList.style.cssText = 'margin-top:8px;border:1px solid #333;border-radius:6px;overflow:hidden';
+
+			this.plugin.settings.savedViews.forEach((view, idx) => {
+				const row = viewsList.createDiv();
+				row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid #222';
+
+				const info = row.createDiv();
+				info.createDiv({ text: view.name }).style.cssText = 'font-weight:bold;font-size:12px';
+				const details: string[] = [];
+				if (view.folderFilter) details.push(`Folder: ${view.folderFilter}`);
+				if (view.tagFilter) details.push(`Tag: ${view.tagFilter}`);
+				if (view.minConnections > 0) details.push(`Min conn: ${view.minConnections}`);
+				if (view.maxConnections < 99999) details.push(`Max conn: ${view.maxConnections}`);
+				if (view.searchQuery) details.push(`Search: "${view.searchQuery}"`);
+				info.createDiv({ text: details.join(' | ') || 'No filters' }).style.cssText = 'font-size:10px;color:#888';
+
+				const delBtn = row.createEl('button', { text: '✕' });
+				delBtn.style.cssText = 'padding:2px 6px;border:1px solid #666;background:transparent;color:#ff6b6b;border-radius:3px;cursor:pointer;font-size:10px';
+				delBtn.onclick = async () => {
+					this.plugin.settings.savedViews.splice(idx, 1);
+					if (this.plugin.settings.activeView === view.name) {
+						this.plugin.settings.activeView = '';
+					}
+					await this.plugin.saveSettings();
+					this.display();
+				};
+			});
+		}
+
+		// --- Visual Effects Section ---
+		containerEl.createEl('h3', { text: 'Visual Effects' });
+
+		new Setting(containerEl)
+			.setName('Animations')
+			.setDesc('Enable node entry and exit animations')
+			.addToggle(t => t
+				.setValue(this.plugin.settings.animationsEnabled)
+				.onChange(async (v) => {
+					this.plugin.settings.animationsEnabled = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Animation Speed')
+			.setDesc('Speed multiplier for node animations (higher = faster)')
+			.addSlider(s => s
+				.setLimits(0.25, 3.0, 0.25)
+				.setValue(this.plugin.settings.animationSpeed)
+				.setDynamicTooltip()
+				.onChange(async (v) => {
+					this.plugin.settings.animationSpeed = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Bloom Intensity')
+			.setDesc('Intensity of the glow/bloom post-processing effect')
+			.addSlider(s => s
+				.setLimits(0, 3.0, 0.1)
+				.setValue(this.plugin.settings.bloomIntensity)
+				.setDynamicTooltip()
+				.onChange(async (v) => {
+					this.plugin.settings.bloomIntensity = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Bloom Radius')
+			.setDesc('How far the bloom glow extends from bright objects')
+			.addSlider(s => s
+				.setLimits(0, 1.0, 0.05)
+				.setValue(this.plugin.settings.bloomRadius)
+				.setDynamicTooltip()
+				.onChange(async (v) => {
+					this.plugin.settings.bloomRadius = v;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('Bloom Threshold')
+			.setDesc('Luminance threshold — lower values make more things glow')
+			.addSlider(s => s
+				.setLimits(0, 1.0, 0.05)
+				.setValue(this.plugin.settings.bloomThreshold)
+				.setDynamicTooltip()
+				.onChange(async (v) => {
+					this.plugin.settings.bloomThreshold = v;
+					await this.plugin.saveSettings();
+				})
+			);
 	}
 }

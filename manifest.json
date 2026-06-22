@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
-	"version": "1.0.0",
-	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"id": "graphforge",
+	"name": "GraphForge",
+	"version": "0.2.0",
+	"minAppVersion": "1.4.16",
+	"description": "Immersive 3D knowledge graph visualization with physics engines, AI-powered suggestions, analytics, and time travel",
+	"author": "Bozo (644bo)",
+	"authorUrl": "",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }
