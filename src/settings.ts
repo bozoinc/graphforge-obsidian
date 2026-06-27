@@ -1,5 +1,5 @@
 export type ClusterMode = 'none' | 'folder' | 'tags';
-export type LayoutMode = 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline' | 'radial';
+export type LayoutMode = 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline' | 'radial' | 'solar' | 'galaxy';
 
 export interface SavedView {
 	name: string;

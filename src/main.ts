@@ -41,13 +41,17 @@ export default class GraphForgePlugin extends Plugin {
 			name: 'Suggest Connections',
 			callback: () => {
 				this.activateView();
-				// The modal will be opened from the view's toolbar button
 				new Notice('Use the 💡 button in the GraphForge toolbar to see suggestions');
 			},
 		});
 
 		// Settings tab
 		this.addSettingTab(new GraphForgeSettingTab(this.app, this));
+	}
+
+	onunload() {
+		// No need to detach leaves; just clean up resources if any.
+		// (GraphForgeView.onClose already disposes of WebGL resources)
 	}
 
 	async activateView() {
@@ -76,10 +80,6 @@ export default class GraphForgePlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-
-	onunload() {
-		this.app.workspace.detachLeavesOfType(GRAPHFORGE_VIEW_TYPE);
-	}
 }
 
 import { App, PluginSettingTab, Setting } from 'obsidian';
@@ -95,7 +95,11 @@ class GraphForgeSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl('h2', { text: 'GraphForge Settings' });
+
+		// Title using Setting API
+		new Setting(containerEl)
+			.setName('GraphForge Settings')
+			.setDesc('Configure the 3D knowledge graph visualization');
 
 		new Setting(containerEl)
 			.setName('Node Size')
@@ -130,7 +134,7 @@ class GraphForgeSettingTab extends PluginSettingTab {
 				.addOption('galaxy', 'Galaxy')
 				.setValue(this.plugin.settings.theme)
 				.onChange(async (v) => {
-					this.plugin.settings.theme = v as 'dark' | 'light' | 'neon';
+					this.plugin.settings.theme = v as 'dark' | 'light' | 'neon' | 'galaxy';
 					await this.plugin.saveSettings();
 				})
 			);
@@ -185,7 +189,9 @@ class GraphForgeSettingTab extends PluginSettingTab {
 			);
 
 		// --- Layout Section ---
-		containerEl.createEl('h3', { text: 'Layout' });
+		new Setting(containerEl)
+			.setName('Layout')
+			.setDesc('Graph layout settings');
 
 		new Setting(containerEl)
 			.setName('Default Layout')
@@ -197,9 +203,11 @@ class GraphForgeSettingTab extends PluginSettingTab {
 				.addOption('grid', 'Grid')
 				.addOption('timeline', 'Timeline')
 				.addOption('radial', 'Radial')
+				.addOption('solar', 'Solar System')
+				.addOption('galaxy', 'Galaxy')
 				.setValue(this.plugin.settings.layoutMode)
 				.onChange(async (v) => {
-					this.plugin.settings.layoutMode = v as 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline' | 'radial';
+					this.plugin.settings.layoutMode = v as 'force' | 'hierarchical' | 'circular' | 'grid' | 'timeline' | 'radial' | 'solar' | 'galaxy';
 					await this.plugin.saveSettings();
 				})
 			);
@@ -216,7 +224,9 @@ class GraphForgeSettingTab extends PluginSettingTab {
 			);
 
 		// --- Clustering Section ---
-		containerEl.createEl('h3', { text: 'Clustering' });
+		new Setting(containerEl)
+			.setName('Clustering')
+			.setDesc('Node clustering settings');
 
 		new Setting(containerEl)
 			.setName('Cluster Mode')
@@ -233,7 +243,9 @@ class GraphForgeSettingTab extends PluginSettingTab {
 			);
 
 		// --- Saved Views Section ---
-		containerEl.createEl('h3', { text: 'Saved Views' });
+		new Setting(containerEl)
+			.setName('Saved Views')
+			.setDesc('Manage saved graph views');
 
 		new Setting(containerEl)
 			.setName('Active View')
@@ -297,7 +309,9 @@ class GraphForgeSettingTab extends PluginSettingTab {
 		}
 
 		// --- Visual Effects Section ---
-		containerEl.createEl('h3', { text: 'Visual Effects' });
+		new Setting(containerEl)
+			.setName('Visual Effects')
+			.setDesc('Visual effects settings');
 
 		new Setting(containerEl)
 			.setName('Animations')

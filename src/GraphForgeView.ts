@@ -75,14 +75,9 @@ export class GraphForgeView extends ItemView {
 	async onOpen() {
 		try {
 			this.containerEl2.empty(); this.containerEl2.addClass('graphforge-container');
-			// Show loading spinner
-			const loadingEl = this.containerEl2.createDiv();
-			loadingEl.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1000';
-			loadingEl.innerHTML = `<div style="width:40px;height:40px;border:3px solid rgba(74,158,255,0.2);border-top-color:#4a9eff;border-radius:50%;animation:gf-spin 0.8s linear infinite;margin:0 auto 12px"></div><div style="color:#4a9eff;font-size:13px;font-weight:600">Loading Graph...</div><div style="color:#666;font-size:10px;margin-top:4px" id="gf-loading-status">Initializing</div>`;
-			// Add spinner animation
-			const style = document.createElement('style');
-			style.textContent = '@keyframes gf-spin{to{transform:rotate(360deg)}}';
-			this.containerEl2.appendChild(style);
+			// Show loading spinner using CSS classes
+			const loadingEl = this.containerEl2.createDiv({ cls: 'gf-loading-overlay' });
+			loadingEl.innerHTML = `<div class="gf-spinner"></div><div class="gf-loading-text">Loading Graph...</div><div class="gf-loading-status" id="gf-loading-status">Initializing</div>`;
 
 			const w = this.containerEl2.clientWidth || 800; const h = this.containerEl2.clientHeight || 600;
 			const theme = THEMES[this.settings.theme]; this.loadStartTime = performance.now();
@@ -92,7 +87,7 @@ export class GraphForgeView extends ItemView {
 			this.renderer = new THREE.WebGLRenderer({ antialias: true }); this.renderer.setSize(w, h);
 			this.renderer.setPixelRatio(window.devicePixelRatio); this.containerEl2.appendChild(this.renderer.domElement);
 			this.labelRenderer = new CSS2DRenderer(); this.labelRenderer.setSize(w, h);
-			this.labelRenderer.domElement.style.cssText = 'position:absolute;top:0;pointer-events:none';
+			this.labelRenderer.domElement.classList.add('label-renderer');
 			this.containerEl2.appendChild(this.labelRenderer.domElement);
 			this.composer = new EffectComposer(this.renderer, { depthBuffer: true, stencilBuffer: false });
 			this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -116,9 +111,8 @@ export class GraphForgeView extends ItemView {
 			this.setupMouseHandlers(); this.setupToolbar(); this.animate();
 
 			// Remove loading spinner with fade
-			loadingEl.style.transition = 'opacity 0.3s ease';
-			loadingEl.style.opacity = '0';
-			setTimeout(() => { loadingEl.remove(); style.remove(); }, 300);
+			loadingEl.classList.add('gf-fade-out');
+			setTimeout(() => { loadingEl.remove(); }, 300);
 
 			this.registerEvent(this.app.workspace.on('resize', () => {
 				const w = this.containerEl2.clientWidth || 800; const h = this.containerEl2.clientHeight || 600;
@@ -168,8 +162,10 @@ export class GraphForgeView extends ItemView {
 			const geo = new THREE.SphereGeometry(size, 16, 16);
 			const mat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.15, shininess: 80, transparent: true, opacity: 0.9 });
 			const mesh = new THREE.Mesh(geo, mat); mesh.position.set(x, y, z); mesh.userData = { file };
-			const labelDiv = document.createElement('div'); labelDiv.className = 'graphforge-label'; labelDiv.textContent = file.basename;
-			labelDiv.style.cssText = `color:#fff;font-size:10px;font-family:sans-serif;padding:2px 6px;background:rgba(0,0,0,0.6);border-radius:3px;white-space:nowrap;pointer-events:none;opacity:${this.showLabels ? 1 : 0}`;
+			const labelDiv = document.createElement('div'); 
+			labelDiv.className = 'graphforge-label'; 
+			labelDiv.textContent = file.basename;
+			if (!this.showLabels) labelDiv.style.opacity = '0';
 			const label = new CSS2DObject(labelDiv); label.position.set(0, size + 2, 0); mesh.add(label);
 			this.scene.add(mesh);
 			this.nodes.set(file.path, { file, mesh, label, links: allLinks, x, y, z, vx: 0, vy: 0, vz: 0, degree, entryProgress: 0, entryDelay: staggerDelay, entryStartTime: this.loadStartTime, exitProgress: 0, isExiting: false, baseEmissiveIntensity: 0.15, currentEmissiveIntensity: 0.15, targetEmissiveIntensity: 0.15, targetScale: new THREE.Vector3(1, 1, 1) });
@@ -414,29 +410,28 @@ export class GraphForgeView extends ItemView {
 	// ═══════════════════════════════════════════════════════════════════════
 
 	setupToolbar() {
-		const header = this.containerEl2.createDiv({ cls: 'graphforge-toolbar' });
-		header.style.cssText = 'position:absolute;top:10px;left:10px;z-index:100;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:calc(100% - 20px)';
+		const header = this.containerEl2.createDiv({ cls: 'gf-toolbar' });
 		const search = header.createEl('input'); search.type = 'text'; search.placeholder = 'Search...';
-		search.style.cssText = 'padding:4px 8px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;width:140px';
+		search.classList.add('gf-toolbar-input');
 		search.addEventListener('input', (e) => { this.searchQuery = (e.target as HTMLInputElement).value.toLowerCase(); this.applyFilters(); });
-		const mkBtn = (text: string, title: string, onClick: () => void) => { const b = header.createEl('button', { text }); b.title = title; b.style.cssText = 'padding:3px 6px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);cursor:pointer;font-size:11px'; b.addEventListener('click', onClick); return b; };
+		const mkBtn = (text: string, title: string, onClick: () => void) => { const b = header.createEl('button', { text }); b.title = title; b.classList.add('gf-toolbar-btn'); b.addEventListener('click', onClick); return b; };
 		mkBtn('🏷️', 'Toggle labels', () => { this.showLabels = !this.showLabels; this.nodes.forEach(n => { n.label.element.style.opacity = this.showLabels ? '1' : '0'; }); });
 		mkBtn('🔄', 'Reset view', () => { this.camera.position.set(0, 30, 60); this.controls.reset(); });
 		mkBtn('⏸️', 'Pause/Resume layout', () => { this.layoutRunning = !this.layoutRunning; });
 		mkBtn('🎯', 'Focus mode', () => this.toggleFocusMode());
 		// Layout dropdown
-		const layoutSel = header.createEl('select') as HTMLSelectElement; layoutSel.style.cssText = 'padding:3px 6px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);color:#fff;font-size:11px';
+		const layoutSel = header.createEl('select') as HTMLSelectElement; layoutSel.classList.add('gf-toolbar-select');
 		[{v:'force',l:'Force'},{v:'hierarchical',l:'Tree'},{v:'circular',l:'Circle'},{v:'grid',l:'Grid'},{v:'timeline',l:'Timeline'},{v:'radial',l:'Radial'},{v:'solar',l:'Solar System'},{v:'galaxy',l:'Galaxy'}].forEach(o => { const opt = layoutSel.createEl('option'); opt.value = o.v; opt.text = o.l; });
 		layoutSel.value = this.currentLayout; layoutSel.addEventListener('change', () => this.applyLayout(layoutSel.value));
 		// View mode
-		const viewSel = header.createEl('select') as HTMLSelectElement; viewSel.style.cssText = 'padding:3px 6px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);color:#fff;font-size:11px';
+		const viewSel = header.createEl('select') as HTMLSelectElement; viewSel.classList.add('gf-toolbar-select');
 		[{v:'all',l:'All Nodes'},{v:'hub-spoke',l:'Hub & Spoke'},{v:'constellation',l:'Constellation'},{v:'focused',l:'Focused'}].forEach(o => { const opt = viewSel.createEl('option'); opt.value = o.v; opt.text = o.l; });
 		viewSel.value = 'all'; viewSel.addEventListener('change', () => this.applyViewMode(viewSel.value));
 		// Suggest connections dropdown
-		const suggestContainer = header.createDiv(); suggestContainer.style.cssText = 'position:relative;display:inline-block';
-		const suggestBtn = suggestContainer.createEl('button', { text: '💡' }); suggestBtn.title = 'Suggest connections'; suggestBtn.style.cssText = 'padding:3px 6px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);cursor:pointer;font-size:11px';
-		const suggestDropdown = suggestContainer.createDiv(); suggestDropdown.style.cssText = 'display:none;position:absolute;top:100%;left:0;margin-top:4px;background:rgba(20,20,40,0.95);border:1px solid #444;border-radius:6px;z-index:1000;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.5)';
-		suggestDropdown.innerHTML = `<div style="padding:8px 12px;border-bottom:1px solid #333;font-size:10px;color:#888">Suggested Connections</div><button id="gf-accept-all" style="width:100%;padding:8px 12px;background:none;border:none;color:#50fa7b;font-size:11px;cursor:pointer;text-align:left">✓ Accept All & Create Links</button><button id="gf-view-suggestions" style="width:100%;padding:8px 12px;background:none;border:none;color:#4a9eff;font-size:11px;cursor:pointer;text-align:left">👁️ View Suggestions</button>`;
+		const suggestContainer = header.createDiv({ cls: 'gf-suggest-container' });
+		const suggestBtn = suggestContainer.createEl('button', { text: '💡' }); suggestBtn.title = 'Suggest connections'; suggestBtn.classList.add('gf-toolbar-btn');
+		const suggestDropdown = suggestContainer.createDiv({ cls: 'gf-suggest-dropdown' });
+		suggestDropdown.innerHTML = `<div class="gf-suggest-header">Suggested Connections</div><button id="gf-accept-all" class="gf-suggest-btn">✓ Accept All & Create Links</button><button id="gf-view-suggestions" class="gf-suggest-btn">👁️ View Suggestions</button>`;
 		suggestBtn.onclick = () => { suggestDropdown.style.display = suggestDropdown.style.display === 'none' ? 'block' : 'none'; };
 		document.addEventListener('click', (e) => { if (!suggestContainer.contains(e.target as Node)) suggestDropdown.style.display = 'none'; });
 		suggestDropdown.querySelector('#gf-accept-all')!.addEventListener('click', async () => { suggestDropdown.style.display = 'none'; await this.acceptAllSuggestions(); });
@@ -444,7 +439,7 @@ export class GraphForgeView extends ItemView {
 		mkBtn('📊', 'Analytics', () => this.toggleAnalyticsPanel());
 		mkBtn('📤', 'Export', () => this.openExportMenu());
 		// Physics engine dropdown
-		const physSel = header.createEl('select') as HTMLSelectElement; physSel.style.cssText = 'padding:3px 6px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.7);color:#fff;font-size:11px';
+		const physSel = header.createEl('select') as HTMLSelectElement; physSel.classList.add('gf-toolbar-select');
 		[{v:'classical',l:'⚡ Classical'},{v:'einstein',l:'🌌 Einstein'},{v:'nexus',l:'🔮 Nexus'}].forEach(o => { const opt = physSel.createEl('option'); opt.value = o.v; opt.text = o.l; });
 		physSel.value = this.physicsMode; physSel.addEventListener('change', () => { this.physicsMode = physSel.value as any; new Notice(`Physics: ${physSel.options[physSel.selectedIndex].text}`); });
 		// Temporal mode button
@@ -463,43 +458,40 @@ export class GraphForgeView extends ItemView {
 	}
 
 	showForcePanel() {
-		this.hideForcePanel();
-		this.forcePanelEl = this.containerEl2.createDiv();
-		this.forcePanelEl.style.cssText = 'position:absolute;top:50px;right:10px;width:260px;background:rgba(10,10,30,0.92);border:1px solid rgba(74,158,255,0.3);border-radius:8px;padding:12px;z-index:200;backdrop-filter:blur(8px);max-height:80vh;overflow-y:auto';
-		const fh = this.forcePanelEl.createDiv(); fh.style.cssText = 'font-size:12px;font-weight:bold;color:#4a9eff;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center';
-		fh.createSpan({ text: '🎛️ Force Controls' });
-		const closeF = fh.createEl('button', { text: '✕' }); closeF.style.cssText = 'background:none;border:none;color:#888;cursor:pointer;font-size:14px'; closeF.onclick = () => this.hideForcePanel();
+			this.hideForcePanel();
+			this.forcePanelEl = this.containerEl2.createDiv({ cls: 'gf-panel gf-force-panel' });
+			const fh = this.forcePanelEl.createDiv({ cls: 'gf-panel-header' });
+			fh.createSpan({ text: '🎛️ Force Controls' });
+			const closeF = fh.createEl('button', { text: '✕', cls: 'gf-panel-close' }); closeF.onclick = () => this.hideForcePanel();
 
-		// Reset button
-		const resetBtn = this.forcePanelEl.createEl('button', { text: '↺ Reset to Defaults' });
-		resetBtn.style.cssText = 'width:100%;padding:4px;margin-bottom:10px;border-radius:4px;border:1px solid #444;background:rgba(74,158,255,0.1);color:#4a9eff;font-size:10px;cursor:pointer';
-		resetBtn.onclick = () => { this.forceParams = { gravity: 0.5, repel: 0.5, linkForce: 0.5, linkDistance: 0.5, damping: 0.85 }; this.hideForcePanel(); this.showForcePanel(); new Notice('Forces reset to defaults'); };
+			// Reset button
+			const resetBtn = this.forcePanelEl.createEl('button', { text: '↺ Reset to Defaults', cls: 'gf-panel-reset' });
+			resetBtn.onclick = () => { this.forceParams = { gravity: 0.5, repel: 0.5, linkForce: 0.5, linkDistance: 0.5, damping: 0.85 }; this.hideForcePanel(); this.showForcePanel(); new Notice('Forces reset to defaults'); };
 
-		if (!this.forcePanelEl) return;
-		const sliders = [
-			{ key: 'gravity', label: '🌌 Gravity', min: 0, max: 100, desc: 'Central pull strength' },
-			{ key: 'repel', label: '⚡ Repel', min: 20, max: 100, desc: 'Node separation (min 20% to prevent collapse)' },
-			{ key: 'linkForce', label: '🔗 Link', min: 10, max: 100, desc: 'Connection strength (min 10%)' },
-			{ key: 'linkDistance', label: '💫 Distance', min: 30, max: 100, desc: 'Link rest distance (min 30%)' },
-			{ key: 'damping', label: '🌊 Damping/Rotation', min: 50, max: 95, desc: 'Friction / spin resistance' },
-		];
-		sliders.forEach(s => {
-			const row = this.forcePanelEl!.createDiv(); row.style.cssText = 'margin-bottom:8px';
-			const lbl = row.createDiv(); lbl.style.cssText = 'font-size:10px;color:#aaa;margin-bottom:2px;display:flex;justify-content:space-between';
-			lbl.createSpan({ text: s.label });
-			const valSpan = lbl.createSpan({ text: '50%' }); valSpan.style.cssText = 'color:#4a9eff';
-			const slider = row.createEl('input') as HTMLInputElement;
-			slider.type = 'range'; slider.min = String(s.min); slider.max = String(s.max);
-			slider.value = String(Math.round(this.forceParams[s.key as keyof typeof this.forceParams] * 100));
-			slider.style.cssText = 'width:100%;accent-color:#4a9eff;height:4px';
-			slider.addEventListener('input', () => {
-				const val = parseInt(slider.value) / 100;
-				this.forceParams[s.key as keyof typeof this.forceParams] = val;
-				valSpan.textContent = Math.round(val * 100) + '%';
+			if (!this.forcePanelEl) return;
+			const sliders = [
+				{ key: 'gravity', label: '🌌 Gravity', min: 0, max: 100, desc: 'Central pull strength' },
+				{ key: 'repel', label: '⚡ Repel', min: 20, max: 100, desc: 'Node separation (min 20% to prevent collapse)' },
+				{ key: 'linkForce', label: '🔗 Link', min: 10, max: 100, desc: 'Connection strength (min 10%)' },
+				{ key: 'linkDistance', label: '💫 Distance', min: 30, max: 100, desc: 'Link rest distance (min 30%)' },
+				{ key: 'damping', label: '🌊 Damping/Rotation', min: 50, max: 95, desc: 'Friction / spin resistance' },
+			];
+			sliders.forEach(s => {
+				const row = this.forcePanelEl!.createDiv({ cls: 'gf-slider-row' });
+				const lbl = row.createDiv({ cls: 'gf-slider-label' });
+				lbl.createSpan({ text: s.label });
+				const valSpan = lbl.createSpan({ text: '50%', cls: 'gf-slider-value' });
+				const slider = row.createEl('input') as HTMLInputElement;
+				slider.type = 'range'; slider.min = String(s.min); slider.max = String(s.max); slider.classList.add('gf-slider');
+				slider.value = String(Math.round(this.forceParams[s.key as keyof typeof this.forceParams] * 100));
+				slider.addEventListener('input', () => {
+					const val = parseInt(slider.value) / 100;
+					this.forceParams[s.key as keyof typeof this.forceParams] = val;
+					valSpan.textContent = Math.round(val * 100) + '%';
+				});
+				const desc = row.createDiv({ cls: 'gf-slider-desc' }); desc.textContent = s.desc;
 			});
-			const desc = row.createDiv(); desc.style.cssText = 'font-size:8px;color:#555'; desc.textContent = s.desc;
-		});
-	}
+		}
 
 	hideForcePanel() { this.forcePanelEl?.remove(); this.forcePanelEl = null; this.forcePanelOpen = false; }
 	// ═══════════════════════════════════════════════════════════════════════
@@ -511,18 +503,16 @@ export class GraphForgeView extends ItemView {
 
 	showTemporalPanel() {
 		this.hideTemporalPanel();
-		this.temporalPanelEl = this.containerEl2.createDiv();
-		this.temporalPanelEl.style.cssText = 'position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:600px;background:rgba(10,10,30,0.9);border:1px solid rgba(74,158,255,0.3);border-radius:8px;padding:12px;z-index:200;display:flex;flex-direction:column;gap:8px;backdrop-filter:blur(8px)';
+		this.temporalPanelEl = this.containerEl2.createDiv({ cls: 'gf-panel gf-temporal-panel' });
 		const files = this.vault.getMarkdownFiles();
 		const timestamps = files.map(f => f.stat.ctime).filter(t => t > 0);
 		const minTime = Math.min(...timestamps); const maxTime = Math.max(...timestamps);
 		const range = maxTime - minTime || 1;
 		// Date label
-		const dateLabel = this.temporalPanelEl.createDiv(); dateLabel.style.cssText = 'font-size:11px;color:#4a9eff;text-align:center'; dateLabel.textContent = new Date(minTime).toLocaleDateString();
+		const dateLabel = this.temporalPanelEl.createDiv({ cls: 'gf-temporal-date' }); dateLabel.textContent = new Date(minTime).toLocaleDateString();
 		// Slider
 		this.temporalSlider = this.temporalPanelEl.createEl('input') as HTMLInputElement;
-		this.temporalSlider.type = 'range'; this.temporalSlider.min = '0'; this.temporalSlider.max = '1000'; this.temporalSlider.value = '1000';
-		this.temporalSlider.style.cssText = 'width:100%;accent-color:#4a9eff';
+		this.temporalSlider.type = 'range'; this.temporalSlider.min = '0'; this.temporalSlider.max = '1000'; this.temporalSlider.value = '1000'; this.temporalSlider.classList.add('gf-slider');
 		this.temporalSlider.addEventListener('input', () => {
 			const val = parseInt(this.temporalSlider!.value);
 			const cutoff = minTime + (val / 1000) * range;
@@ -531,8 +521,8 @@ export class GraphForgeView extends ItemView {
 			this.links.forEach(l => { const u = l.userData; l.visible = (this.nodes.get(u.from)?.mesh.visible && this.nodes.get(u.to)?.mesh.visible) || false; });
 		});
 		// Controls
-		const controls = this.temporalPanelEl.createDiv(); controls.style.cssText = 'display:flex;gap:8px;justify-content:center';
-		const playBtn = controls.createEl('button', { text: '▶ Play' }); playBtn.style.cssText = 'padding:4px 12px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;cursor:pointer';
+		const controls = this.temporalPanelEl.createDiv({ cls: 'gf-temporal-controls' });
+		const playBtn = controls.createEl('button', { text: '▶ Play', cls: 'gf-temporal-btn' });
 		playBtn.onclick = () => {
 			if (this.temporalPlaying) { this.temporalPlaying = false; playBtn.textContent = '▶ Play'; return; }
 			this.temporalPlaying = true; playBtn.textContent = '⏸ Pause';
@@ -540,7 +530,7 @@ export class GraphForgeView extends ItemView {
 			const step = () => { if (!this.temporalPlaying || !this.temporalSlider) return; val += 2; if (val > 1000) val = 0; this.temporalSlider.value = String(val); this.temporalSlider.dispatchEvent(new Event('input')); setTimeout(step, 50); };
 			step();
 		};
-		const closeBtn = controls.createEl('button', { text: '✕ Close' }); closeBtn.style.cssText = 'padding:4px 12px;border-radius:4px;border:1px solid #444;background:rgba(0,0,0,0.5);color:#888;font-size:11px;cursor:pointer';
+		const closeBtn = controls.createEl('button', { text: '✕ Close', cls: 'gf-temporal-btn' });
 		closeBtn.onclick = () => this.hideTemporalPanel();
 	}
 
