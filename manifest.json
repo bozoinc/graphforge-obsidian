@@ -1,12 +1,11 @@
 {
 	"id": "graphforge-three-d",
 	"name": "GraphForge 3D",
-	"version": "0.2.2",
-	"minAppVersion": "1.6.0",
+	"version": "0.2.3",
+	"minAppVersion": "1.7.0",
 	"description": "Immersive 3D knowledge graph visualization with physics engines, AI-powered suggestions, analytics, and time travel.",
 	"author": "Bozo (644bo)",
 	"authorUrl": "",
 	"fundingUrl": "",
-	"isDesktopOnly": false,
-	"license": "MIT"
+	"isDesktopOnly": false
 }

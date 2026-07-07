@@ -291,13 +291,12 @@ export class GraphForgeView extends ItemView {
 		this.hideHoverPreview();
 		this.hoverTimeout = window.setTimeout(() => {
 			const file = node.file; const cache = this.metadataCache.getFileCache(file);
-			this.hoverPreviewEl = this.containerEl2.createDiv();
-			this.hoverPreviewEl.style.cssText = 'position:absolute;top:50px;right:10px;width:280px;background:rgba(20,20,40,0.95);border:1px solid #444;border-radius:8px;padding:12px;z-index:200;pointer-events:none;backdrop-filter:blur(8px)';
-			this.hoverPreviewEl.createDiv({ text: file.basename }).style.cssText = 'font-size:13px;font-weight:bold;color:#fff;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-			this.vault.cachedRead(file).then(content => { if (!this.hoverPreviewEl) return; const p = content.replace(/[#*`\[\]]/g,'').slice(0,200); const el = this.hoverPreviewEl.createDiv(); el.textContent = p+(content.length>200?'...':''); el.style.cssText = 'font-size:10px;color:#aaa;margin-bottom:8px;line-height:1.4;max-height:80px;overflow:hidden'; }).catch(() => { if (this.hoverPreviewEl) { const el = this.hoverPreviewEl.createDiv(); el.textContent = 'Unable to load preview'; el.style.cssText = 'font-size:10px;color:#666'; } });
+			this.hoverPreviewEl = this.containerEl2.createDiv({ cls: 'gf-hover-preview' });
+			this.hoverPreviewEl.createDiv({ text: file.basename, cls: 'gf-hover-title' });
+			this.vault.cachedRead(file).then(content => { if (!this.hoverPreviewEl) return; const p = content.replace(/[#*`\[\]]/g,'').slice(0,200); const el = this.hoverPreviewEl.createDiv(); el.textContent = p+(content.length>200?'...':''); el.classList.add('gf-hover-content'); }).catch(() => { if (this.hoverPreviewEl) { const el = this.hoverPreviewEl.createDiv({ cls: 'gf-hover-content' }); el.textContent = 'Unable to load preview'; } });
 			const tags = new Set<string>(); (cache?.frontmatter?.tags||[]).forEach((t:string)=>tags.add(t)); (cache?.tags||[]).forEach((t:any)=>tags.add(t.tag));
-			if (tags.size > 0) { const row = this.hoverPreviewEl.createDiv(); row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px'; tags.forEach(t => { const el = row.createSpan({ text: '#'+t }); el.style.cssText = 'font-size:9px;color:#4a9eff;background:rgba(74,158,255,0.1);padding:1px 5px;border-radius:3px'; }); }
-			const stats = this.hoverPreviewEl.createDiv(); stats.style.cssText = 'font-size:9px;color:#666;display:flex;gap:12px';
+			if (tags.size > 0) { const row = this.hoverPreviewEl.createDiv(); row.addClass('gf-hover-tags'); tags.forEach(t => { row.createSpan({ text: '#'+t, cls: 'gf-hover-tag' }); }); }
+			const stats = this.hoverPreviewEl.createDiv({ cls: 'gf-hover-stats' });
 			stats.createSpan({ text: `📅 ${new Date(file.stat.mtime).toLocaleDateString()}` });
 			stats.createSpan({ text: `🔗 ${node.degree} links` });
 		}, 500);
@@ -583,20 +582,17 @@ export class GraphForgeView extends ItemView {
 		};
 		const analytics = computeAnalytics(files, this.metadataCache, this.vault, getLinks);
 
-		this.analyticsPanelEl = this.containerEl2.createDiv();
-		this.analyticsPanelEl.style.cssText = 'position:absolute;top:50px;right:10px;width:300px;background:rgba(10,10,30,0.95);border:1px solid rgba(74,158,255,0.3);border-radius:10px;padding:16px;z-index:200;backdrop-filter:blur(12px);font-family:sans-serif;max-height:80vh;overflow-y:auto';
+		this.analyticsPanelEl = this.containerEl2.createDiv({ cls: 'gf-analytics-panel' });
 
 		// Header
-		const header = this.analyticsPanelEl.createDiv();
-		header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:14px';
-		header.createSpan({ text: '📊 Graph Analytics' }).style.cssText = 'font-size:14px;font-weight:700;color:#fff';
+		const header = this.analyticsPanelEl.createDiv({ cls: 'gf-panel-header' });
+		header.createSpan({ text: '📊 Graph Analytics', cls: 'gf-analytics-title' });
 		const closeBtn = header.createEl('button', { text: '✕' });
-		closeBtn.style.cssText = 'background:none;border:none;color:#888;cursor:pointer;font-size:16px;padding:2px 6px';
+		closeBtn.classList.add('gf-panel-close');
 		closeBtn.onclick = () => this.hideAnalyticsPanel();
 
 		// Stat cards row
-		const cards = this.analyticsPanelEl.createDiv();
-		cards.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px';
+		const cards = this.analyticsPanelEl.createDiv(); cards.addClass('gf-analytics-cards');
 		const statCards = [
 			{ label: 'Nodes', value: analytics.totalNodes, icon: '🔵', color: '#4a9eff' },
 			{ label: 'Links', value: analytics.totalConnections, icon: '🔗', color: '#50fa7b' },
@@ -605,46 +601,45 @@ export class GraphForgeView extends ItemView {
 		];
 		statCards.forEach(card => {
 			const c = cards.createDiv();
-			c.style.cssText = `background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center`;
-			c.createDiv({ text: card.icon }).style.cssText = 'font-size:16px;margin-bottom:4px';
-			c.createDiv({ text: String(card.value) }).style.cssText = `font-size:18px;font-weight:700;color:${card.color}`;
-			c.createDiv({ text: card.label }).style.cssText = 'font-size:9px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:1px';
+			c.addClass('gf-analytics-card');
+			c.createDiv({ text: card.icon, cls: 'gf-analytics-card-icon' });
+			const valEl = c.createDiv({ cls: 'gf-analytics-card-value' }); valEl.textContent = String(card.value); valEl.style.color = card.color;
+			c.createDiv({ text: card.label, cls: 'gf-analytics-card-label' });
 		});
 
 		// Most connected section
 		const mcSection = this.analyticsPanelEl.createDiv();
-		mcSection.style.cssText = 'margin-bottom:14px';
-		mcSection.createDiv({ text: '🏆 Most Connected' }).style.cssText = 'font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px';
+		mcSection.style.marginBottom = '14px';
+		mcSection.createDiv({ text: '🏆 Most Connected', cls: 'gf-analytics-section-header' });
 		analytics.mostConnected.slice(0, 5).forEach((note, i) => {
 			const row = mcSection.createDiv();
-			row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)';
+			row.addClass('gf-analytics-mc-row');
 			const medal = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i] || '•';
-			row.createSpan({ text: medal }).style.cssText = 'font-size:14px;flex-shrink:0';
-			const info = row.createDiv(); info.style.cssText = 'flex:1;min-width:0';
-			info.createDiv({ text: note.name }).style.cssText = 'font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-			info.createDiv({ text: note.path }).style.cssText = 'font-size:9px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-			row.createSpan({ text: String(note.count) }).style.cssText = 'font-size:12px;font-weight:600;color:#4a9eff;flex-shrink:0';
+			row.createSpan({ text: medal, cls: 'gf-analytics-mc-medal' });
+			const info = row.createDiv({ cls: 'gf-analytics-mc-info' });
+			info.createDiv({ text: note.name, cls: 'gf-analytics-mc-name' });
+			info.createDiv({ text: note.path, cls: 'gf-analytics-mc-path' });
+			row.createSpan({ text: String(note.count), cls: 'gf-analytics-mc-count' });
 		});
 
 		// Weekly activity bar chart
 		const weekSection = this.analyticsPanelEl.createDiv();
-		weekSection.style.cssText = 'margin-bottom:14px';
-		weekSection.createDiv({ text: '📅 Weekly Activity' }).style.cssText = 'font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px';
+		weekSection.style.marginBottom = '14px';
+		weekSection.createDiv({ text: '📅 Weekly Activity', cls: 'gf-analytics-section-header' });
 		const maxWeekCount = Math.max(...analytics.notesPerWeek.map(w => w.count), 1);
 		const chart = weekSection.createDiv();
-		chart.style.cssText = 'display:flex;align-items:flex-end;gap:6px;height:60px;padding:0 4px';
+		chart.addClass('gf-analytics-chart');
 		analytics.notesPerWeek.forEach(week => {
 			const barCol = chart.createDiv();
-			barCol.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px';
+			barCol.addClass('gf-analytics-bar-col');
 			const barHeight = Math.max((week.count / maxWeekCount) * 40, 2);
-			const bar = barCol.createDiv();
-			bar.style.cssText = `width:100%;height:${barHeight}px;background:linear-gradient(to top,rgba(74,158,255,0.8),rgba(74,158,255,0.3));border-radius:3px 3px 0 0;transition:height 0.3s ease`;
-			barCol.createDiv({ text: week.label }).style.cssText = 'font-size:8px;color:#666';
+			const bar = barCol.createDiv(); bar.addClass('gf-analytics-bar'); bar.style.height = `${barHeight}px`;
+			barCol.createDiv({ text: week.label, cls: 'gf-analytics-bar-label' });
 		});
 
 		// Connection distribution
 		const distSection = this.analyticsPanelEl.createDiv();
-		distSection.createDiv({ text: '📊 Connection Distribution' }).style.cssText = 'font-size:11px;font-weight:600;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px';
+		distSection.createDiv({ text: '📊 Connection Distribution', cls: 'gf-analytics-section-header' });
 		const distBars = [
 			{ label: '0 links', count: analytics.orphanedCount, color: '#ffb86c' },
 			{ label: '1-2 links', count: files.filter(f => { const l = getLinks(f).length; return l >= 1 && l <= 2; }).length, color: '#8be9fd' },
@@ -654,15 +649,14 @@ export class GraphForgeView extends ItemView {
 		const maxDist = Math.max(...distBars.map(d => d.count), 1);
 		distBars.forEach(d => {
 			const row = distSection.createDiv();
-			row.style.cssText = 'margin-bottom:6px';
+			row.style.marginBottom = '6px';
 			const labelRow = row.createDiv();
-			labelRow.style.cssText = 'display:flex;justify-content:space-between;margin-bottom:2px';
-			labelRow.createSpan({ text: d.label }).style.cssText = 'font-size:10px;color:#aaa';
-			labelRow.createSpan({ text: String(d.count) }).style.cssText = 'font-size:10px;color:#fff;font-weight:600';
+			labelRow.addClass('gf-analytics-dist-label-row');
+			labelRow.createSpan({ text: d.label, cls: 'gf-analytics-dist-label' });
+			labelRow.createSpan({ text: String(d.count), cls: 'gf-analytics-dist-value' });
 			const barBg = row.createDiv();
-			barBg.style.cssText = 'width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden';
-			const barFill = barBg.createDiv();
-			barFill.style.cssText = `width:${(d.count / maxDist) * 100}%;height:100%;background:${d.color};border-radius:3px;transition:width 0.5s ease`;
+			barBg.addClass('gf-analytics-bar-bg');
+			const barFill = barBg.createDiv(); barFill.addClass('gf-analytics-bar-fill'); barFill.style.width = `${(d.count / maxDist) * 100}%`; barFill.style.background = d.color;
 		});
 	}
 	openExportMenu() {
@@ -792,28 +786,50 @@ class SuggestConnectionsModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this; contentEl.empty();
-		contentEl.style.cssText = 'padding:0;width:380px;max-height:70vh;position:fixed;bottom:60px;right:10px;background:rgba(10,10,30,0.85);border:1px solid rgba(74,158,255,0.3);border-radius:8px;backdrop-filter:blur(10px);z-index:1000;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
-		const header = contentEl.createDiv(); header.style.cssText = 'padding:8px 12px;border-bottom:1px solid rgba(74,158,255,0.2);display:flex;justify-content:space-between;align-items:center';
-		header.createEl('h2', { text: '💡 Suggestions' }).style.cssText = 'margin:0;font-size:13px;color:#4a9eff';
-		const closeBtn = header.createEl('button', { text: '✕' }); closeBtn.style.cssText = 'background:none;border:none;color:#888;cursor:pointer;font-size:14px;padding:2px 6px'; closeBtn.onclick = () => this.close();
+		contentEl.addClass('suggest-modal');
+		const header = contentEl.createDiv({ cls: 'suggest-modal-header' });
+		header.createEl('h2', { text: '💡 Suggestions', cls: 'suggest-modal-title' });
+		const closeBtn = header.createEl('button', { text: '✕', cls: 'suggest-modal-close' }); closeBtn.onclick = () => this.close();
 		const files = this.vault.getMarkdownFiles(); const existingLinks = new Map<string, Set<string>>();
 		files.forEach(f => { const cache = this.metadataCache.getFileCache(f); const links = new Set<string>(); (cache?.links||[]).forEach((l:any) => { links.add(l.link); links.add(l.link+'.md'); }); existingLinks.set(f.path, links); });
 		this.suggestions = findSuggestedConnections(files, this.metadataCache, existingLinks, 20);
 		this.suggestions = this.suggestions.filter(s => { const k1 = s.source.path+'<->'+s.target.path; const k2 = s.target.path+'<->'+s.source.path; return !this.processedPairs.has(k1) && !this.processedPairs.has(k2); });
 		if (this.suggestions.length > 0) this.onOpenHighlight(this.suggestions);
-		if (this.suggestions.length === 0) { const empty = contentEl.createDiv(); empty.style.cssText = 'padding:20px;text-align:center;color:#888'; empty.createDiv({ text: '✅ No new suggestions' }).style.cssText = 'font-size:14px;margin-bottom:4px'; empty.createDiv({ text: 'All potentially related notes may already be linked.' }).style.cssText = 'font-size:11px'; return; }
-		const acceptAllBar = contentEl.createDiv(); acceptAllBar.style.cssText = 'padding:6px 12px;display:flex;justify-content:flex-end';
-		const acceptAllBtn = acceptAllBar.createEl('button', { text: `Accept All (${this.suggestions.length})` }); acceptAllBtn.style.cssText = 'padding:4px 12px;border-radius:4px;border:1px solid rgba(74,158,255,0.5);background:rgba(74,158,255,0.15);color:#4a9eff;font-size:11px;cursor:pointer';
+		if (this.suggestions.length === 0) { const empty = contentEl.createDiv({ cls: 'suggest-modal-empty' }); empty.createDiv({ text: '✅ No new suggestions', cls: 'suggest-modal-empty-title' }); empty.createDiv({ text: 'All potentially related notes may already be linked.', cls: 'suggest-modal-empty-sub' }); return; }
+		const acceptAllBar = contentEl.createDiv({ cls: 'suggest-modal-accept-all' });
+		const acceptAllBtn = acceptAllBar.createEl('button', { text: `Accept All (${this.suggestions.length})`, cls: 'suggest-modal-accept-all-btn' });
 		acceptAllBtn.onclick = async () => { this.suggestions.forEach((_, idx) => { this.accepted.add(idx); this.rejected.delete(idx); }); await this.applyAccepted(); new Notice(`Created ${this.accepted.size} connection(s)`); this.close(); };
-		const listContainer = contentEl.createDiv(); listContainer.style.cssText = 'max-height:400px;overflow-y:auto;padding:4px 12px'; (listContainer as any)._listContainer = true; this.renderSuggestions(contentEl);
+		const listContainer = contentEl.createDiv({ cls: 'suggest-modal-list' }); (listContainer as any)._listContainer = true; this.renderSuggestions(contentEl);
 	}
 
 	private async applyAccepted() { for (const idx of this.accepted) { const s = this.suggestions[idx]; if (!s) continue; try { await this.addWikilink(s.source, s.target.basename); await this.addWikilink(s.target, s.source.basename); this.processedPairs.add(s.source.path+'<->'+s.target.path); } catch(e) { console.error(e); } } }
 
 	private async addWikilink(file: TFile, targetName: string) { try { const content = await this.vault.read(file); const linkText = `[[${targetName}]]`; if (content.includes(linkText)) return; let nc: string; if (content.startsWith('---')) { const fe = content.indexOf('---', 3); nc = fe >= 0 ? content.substring(0,fe+3)+'\n'+linkText+'\n'+content.substring(fe+3) : content+'\n'+linkText+'\n'; } else { nc = content+'\n'+linkText+'\n'; } await this.vault.modify(file, nc); } catch(e) { console.error(e); } }
 
-	private renderSuggestions(contentEl: HTMLElement) { let lc = contentEl.querySelector('div[style*="overflow-y:auto"]') as HTMLElement | null; if (!lc) return; lc.empty(); this.suggestions.forEach((s, idx) => { const isAcc = this.accepted.has(idx); const isRej = this.rejected.has(idx); const row = lc!.createDiv(); row.style.cssText = `display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid ${isAcc?'#50fa7b':isRej?'#666':'#333'};border-radius:6px;margin-bottom:6px;background:${isAcc?'rgba(80,250,123,0.05)':isRej?'rgba(0,0,0,0.2)':'rgba(255,255,255,0.02)'};opacity:${isRej?0.5:1}`; const badge = row.createDiv(); badge.textContent = String(s.score); badge.style.cssText = 'min-width:24px;height:24px;border-radius:50%;background:rgba(74,158,255,0.2);color:#4a9eff;font-size:10px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0'; const info = row.createDiv(); info.style.cssText = 'flex:1;min-width:0'; const titleRow = info.createDiv(); titleRow.style.cssText = 'font-size:12px;font-weight:bold;color:#fff'; titleRow.textContent = `${s.source.basename} ↔ ${s.target.basename}`; const reasonRow = info.createDiv(); reasonRow.style.cssText = 'font-size:10px;color:#888;margin-top:2px'; reasonRow.textContent = s.reason; const actions = row.createDiv(); actions.style.cssText = 'display:flex;gap:4px;flex-shrink:0'; if (!isAcc && !isRej) { const accBtn = actions.createEl('button', { text: '✓' }); accBtn.style.cssText = 'padding:3px 8px;border-radius:4px;border:1px solid #50fa7b;background:transparent;color:#50fa7b;font-size:12px;cursor:pointer;font-weight:bold'; accBtn.onclick = () => { this.accepted.add(idx); this.rejected.delete(idx); this.renderSuggestions(contentEl); }; const rejBtn = actions.createEl('button', { text: '✕' }); rejBtn.style.cssText = 'padding:3px 8px;border-radius:4px;border:1px solid #666;background:transparent;color:#888;font-size:12px;cursor:pointer'; rejBtn.onclick = () => { this.rejected.add(idx); this.accepted.delete(idx); this.renderSuggestions(contentEl); }; } else if (isAcc) { actions.createSpan({ text: '✓ Added' }).style.cssText = 'font-size:10px;color:#50fa7b;padding:3px 6px'; } else { actions.createSpan({ text: 'Skipped' }).style.cssText = 'font-size:10px;color:#666;padding:3px 6px'; } }); }
-
+	private renderSuggestions(contentEl: HTMLElement) {
+		let lc = contentEl.querySelector('.suggest-modal-list') as HTMLElement | null;
+		if (!lc) { lc = contentEl.createDiv({ cls: 'suggest-modal-list' }); }
+		lc.empty();
+		this.suggestions.forEach((s, idx) => {
+			const isAcc = this.accepted.has(idx); const isRej = this.rejected.has(idx);
+			const row = lc!.createDiv({ cls: 'suggest-modal-row' });
+			if (isAcc) row.addClass('accepted');
+			if (isRej) row.addClass('rejected');
+			const badge = row.createDiv({ cls: 'suggest-modal-badge' }); badge.textContent = String(s.score);
+			const info = row.createDiv({ cls: 'gf-analytics-mc-info' });
+			const titleRow = info.createDiv({ cls: 'suggest-modal-title-row' }); titleRow.textContent = `${s.source.basename} ↔ ${s.target.basename}`;
+			const reasonRow = info.createDiv({ cls: 'suggest-modal-reason' }); reasonRow.textContent = s.reason;
+			const actions = row.createDiv({ cls: 'suggest-modal-actions' });
+			if (!isAcc && !isRej) {
+				const accBtn = actions.createEl('button', { text: '✓', cls: 'suggest-modal-acc-btn' }); accBtn.onclick = () => { this.accepted.add(idx); this.rejected.delete(idx); this.renderSuggestions(contentEl); };
+				const rejBtn = actions.createEl('button', { text: '✕', cls: 'suggest-modal-rej-btn' }); rejBtn.onclick = () => { this.rejected.add(idx); this.accepted.delete(idx); this.renderSuggestions(contentEl); };
+			} else if (isAcc) {
+				actions.createSpan({ text: '✓ Added', cls: 'suggest-modal-added' });
+			} else {
+				actions.createSpan({ text: 'Skipped', cls: 'suggest-modal-skipped' });
+			}
+		});
+	}
 	onClose() { this.onCloseHighlight(); super.onClose(); }
 }
 

@@ -279,24 +279,24 @@ class GraphForgeSettingTab extends PluginSettingTab {
 		// List saved views with details
 		if (this.plugin.settings.savedViews.length > 0) {
 			const viewsList = containerEl.createDiv();
-			viewsList.style.cssText = 'margin-top:8px;border:1px solid #333;border-radius:6px;overflow:hidden';
+			viewsList.addClass('gf-views-list');
 
 			this.plugin.settings.savedViews.forEach((view, idx) => {
 				const row = viewsList.createDiv();
-				row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid #222';
+				row.addClass('gf-views-row');
 
 				const info = row.createDiv();
-				info.createDiv({ text: view.name }).style.cssText = 'font-weight:bold;font-size:12px';
+				info.createDiv({ text: view.name, cls: 'gf-views-name' });
 				const details: string[] = [];
 				if (view.folderFilter) details.push(`Folder: ${view.folderFilter}`);
 				if (view.tagFilter) details.push(`Tag: ${view.tagFilter}`);
 				if (view.minConnections > 0) details.push(`Min conn: ${view.minConnections}`);
 				if (view.maxConnections < 99999) details.push(`Max conn: ${view.maxConnections}`);
 				if (view.searchQuery) details.push(`Search: "${view.searchQuery}"`);
-				info.createDiv({ text: details.join(' | ') || 'No filters' }).style.cssText = 'font-size:10px;color:#888';
+				info.createDiv({ text: details.join(' | ') || 'No filters', cls: 'gf-views-details' });
 
 				const delBtn = row.createEl('button', { text: '✕' });
-				delBtn.style.cssText = 'padding:2px 6px;border:1px solid #666;background:transparent;color:#ff6b6b;border-radius:3px;cursor:pointer;font-size:10px';
+				delBtn.addClass('gf-views-del-btn');
 				delBtn.onclick = async () => {
 					this.plugin.settings.savedViews.splice(idx, 1);
 					if (this.plugin.settings.activeView === view.name) {

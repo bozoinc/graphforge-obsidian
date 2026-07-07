@@ -807,3 +807,189 @@ input[type="range"]::-moz-range-thumb {
     color: #666;
     padding: 3px 6px;
 }
+
+/* --- Analytics Cards --- */
+.gf-analytics-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.gf-analytics-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.gf-analytics-card-icon {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.gf-analytics-card-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.gf-analytics-card-label {
+    font-size: 9px;
+    color: #888;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gf-analytics-section-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: #aaa;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.gf-analytics-mc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.gf-analytics-mc-medal {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.gf-analytics-mc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gf-analytics-mc-name {
+    font-size: 11px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gf-analytics-mc-path {
+    font-size: 9px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gf-analytics-mc-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a9eff;
+    flex-shrink: 0;
+}
+
+.gf-analytics-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 60px;
+    padding: 0 4px;
+}
+
+.gf-analytics-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.gf-analytics-bar {
+    width: 100%;
+    background: linear-gradient(to top, rgba(74,158,255,0.8), rgba(74,158,255,0.3));
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s ease;
+}
+
+.gf-analytics-bar-label {
+    font-size: 8px;
+    color: #666;
+}
+
+.gf-analytics-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.gf-analytics-dist-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.gf-analytics-dist-label {
+    font-size: 10px;
+    color: #aaa;
+}
+
+.gf-analytics-dist-value {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.gf-analytics-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.gf-views-list {
+    margin-top: 8px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.gf-views-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #222;
+}
+
+.gf-views-row:last-child {
+    border-bottom: none;
+}
+
+.gf-views-name {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.gf-views-details {
+    font-size: 10px;
+    color: #888;
+}
+
+.gf-views-del-btn {
+    padding: 2px 6px;
+    border: 1px solid #666;
+    background: transparent;
+    color: #ff6b6b;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.gf-views-del-btn:hover {
+    background: rgba(255, 107, 107, 0.1);
+}
